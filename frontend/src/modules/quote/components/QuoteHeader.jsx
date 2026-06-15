@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuoteStore } from '../store/quoteStore';
 import { quoteApi } from '../api/quoteApi';
 
-export default function QuoteHeader() {
+export default function QuoteHeader({ readOnly = false }) {
   const { cotizacion, updateHeader } = useQuoteStore();
   const [clientes, setClientes] = useState([]);
   const [tipoCambio, setTipoCambio] = useState('');
@@ -52,6 +52,15 @@ export default function QuoteHeader() {
     updateHeader(cotizacion.id, updates);
   };
 
+  // Margen de utilidad: el usuario edita el % (entero, mínimo 0), se guarda como
+  // multiplicador (18% -> 1.18). Va de 1 en 1% con los botones del input.
+  const handleMargenChange = (e) => {
+    let pct = parseInt(e.target.value, 10);
+    if (isNaN(pct) || pct < 0) pct = 0;
+    const utilidad = (1 + pct / 100).toFixed(2);
+    updateHeader(cotizacion.id, { utilidad });
+  };
+
   const handleBlurCliente = async (e) => {
     // Cuando sale del campo cliente_nombre, guardarlo en BD si no existe o actualizarlo
     if (!cotizacion.cliente_nombre) return;
@@ -72,7 +81,7 @@ export default function QuoteHeader() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <fieldset disabled={readOnly} style={{ border: 'none', padding: 0, margin: 0, minInlineSize: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <h3 style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
         Datos de Cliente
       </h3>
@@ -223,20 +232,20 @@ export default function QuoteHeader() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
          <div>
           <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Margen (Utilidad)</label>
-          <select 
-            name="utilidad"
-            value={Number(cotizacion.utilidad).toFixed(2)} 
-            onChange={handleChange}
-            className="input-field"
-          >
-            <option value="1.10">10%</option>
-            <option value="1.15">15%</option>
-            <option value="1.20">20%</option>
-            <option value="1.25">25%</option>
-            <option value="1.30">30%</option>
-            <option value="1.35">35%</option>
-            <option value="1.40">40%</option>
-          </select>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <input
+              type="number"
+              name="utilidad"
+              min="0"
+              step="1"
+              value={Math.round((Number(cotizacion.utilidad) - 1) * 100)}
+              onChange={handleMargenChange}
+              onKeyDown={e => { if (['.', ',', 'e', 'E', '-', '+'].includes(e.key)) e.preventDefault(); }}
+              className="input-field"
+              style={{ flex: 1 }}
+            />
+            <span style={{ color: 'var(--text-secondary)' }}>%</span>
+          </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '0.5rem' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
@@ -251,6 +260,6 @@ export default function QuoteHeader() {
           </label>
         </div>
       </div>
-    </div>
+    </fieldset>
   );
 }

@@ -1,12 +1,22 @@
 import { useState } from 'react';
 import { useQuoteStore } from '../store/quoteStore';
 
-export default function QuoteTable({ cotizacionId }) {
-  const { items, updateItem, removeItem, reorderItems } = useQuoteStore();
+export default function QuoteTable({ cotizacionId, readOnly = false }) {
+  const { items, cotizacion, updateItem, removeItem, reorderItems } = useQuoteStore();
   const [draggedIndex, setDraggedIndex] = useState(null);
+
+  // Símbolo de la moneda de la cotización (el subtotal viene convertido del backend)
+  const monedaSimbolo = cotizacion?.moneda?.includes('USD') ? '$' : 'S/';
 
   const handleUpdate = (id, field, value) => {
     updateItem(cotizacionId, id, { [field]: value });
+  };
+
+  // Cantidad: solo enteros, mínimo 1 (no permite 0 ni negativos)
+  const handleQtyChange = (id, raw) => {
+    let n = parseInt(raw, 10);
+    if (isNaN(n) || n < 1) n = 1;
+    handleUpdate(id, 'cantidad', n);
   };
 
   const handleDragStart = (e, index) => {
@@ -58,9 +68,9 @@ export default function QuoteTable({ cotizacionId }) {
             </tr>
           ) : (
             items.map((item, index) => (
-              <tr 
+              <tr
                 key={item.id}
-                draggable
+                draggable={!readOnly}
                 onDragStart={(e) => handleDragStart(e, index)}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, index)}
@@ -74,10 +84,14 @@ export default function QuoteTable({ cotizacionId }) {
                   ⋮⋮
                 </td>
                 <td>
-                  <input 
-                    type="number" 
-                    value={item.cantidad} 
-                    onChange={e => handleUpdate(item.id, 'cantidad', e.target.value)}
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={parseInt(item.cantidad, 10) || 1}
+                    onChange={e => handleQtyChange(item.id, e.target.value)}
+                    onKeyDown={e => { if (['.', ',', 'e', 'E', '-', '+'].includes(e.key)) e.preventDefault(); }}
+                    disabled={readOnly}
                     className="input-field"
                     style={{ padding: '0.25rem' }}
                   />
@@ -86,14 +100,16 @@ export default function QuoteTable({ cotizacionId }) {
                 <td>
                   <input 
                     type="text" 
-                    value={item.nombre} 
+                    value={item.nombre}
                     onChange={e => handleUpdate(item.id, 'nombre', e.target.value)}
+                    disabled={readOnly}
                     className="input-field"
                     style={{ padding: '0.25rem', marginBottom: '4px' }}
                   />
                   <textarea 
-                    value={item.descripcion || ''} 
+                    value={item.descripcion || ''}
                     onChange={e => handleUpdate(item.id, 'descripcion', e.target.value)}
+                    disabled={readOnly}
                     className="input-field"
                     style={{ padding: '0.25rem', fontSize: '0.8rem', minHeight: '40px' }}
                     placeholder="Descripción (opcional)"
@@ -102,23 +118,20 @@ export default function QuoteTable({ cotizacionId }) {
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{item.moneda}</span>
-                    <input 
-                      type="number" 
-                      value={item.precio_unit} 
-                      onChange={e => handleUpdate(item.id, 'precio_unit', e.target.value)}
-                      className="input-field"
-                      style={{ padding: '0.25rem' }}
-                    />
+                    <span>
+                      {Number(item.precio_unit).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
                   </div>
                 </td>
                 <td style={{ fontWeight: '600', color: 'var(--primary-color)' }}>
-                  {item.moneda} {Number(item.subtotal || (item.cantidad * item.precio_unit)).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                  {monedaSimbolo} {Number(item.subtotal || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                 </td>
                 <td>
                   <input 
                     type="text" 
-                    value={item.particion} 
+                    value={item.particion}
                     onChange={e => handleUpdate(item.id, 'particion', e.target.value)}
+                    disabled={readOnly}
                     className="input-field"
                     style={{ padding: '0.25rem' }}
                   />
@@ -126,21 +139,24 @@ export default function QuoteTable({ cotizacionId }) {
                 <td>
                   <input 
                     type="text" 
-                    value={item.subparticion || ''} 
+                    value={item.subparticion || ''}
                     onChange={e => handleUpdate(item.id, 'subparticion', e.target.value)}
+                    disabled={readOnly}
                     className="input-field"
                     style={{ padding: '0.25rem' }}
                   />
                 </td>
                 <td style={{ textAlign: 'center' }}>
-                  <button 
-                    onClick={() => removeItem(cotizacionId, item.id)}
-                    className="btn btn-danger"
-                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
-                    title="Eliminar"
-                  >
-                    X
-                  </button>
+                  {!readOnly && (
+                    <button
+                      onClick={() => removeItem(cotizacionId, item.id)}
+                      className="btn btn-danger"
+                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
+                      title="Eliminar"
+                    >
+                      X
+                    </button>
+                  )}
                 </td>
               </tr>
             ))

@@ -1,6 +1,6 @@
 from sqlalchemy import (
     Boolean, Column, ForeignKey, Integer, Numeric,
-    String, Text, DateTime, JSON
+    String, Text, DateTime, JSON, UniqueConstraint
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -27,15 +27,24 @@ class Producto(Base):
 
 class Cotizacion(Base):
     __tablename__ = "cotizaciones"
+    __table_args__ = (
+        UniqueConstraint("correlativo_anio", "correlativo_num",
+                         name="uq_cotizaciones_correlativo_anio_num"),
+    )
 
     id                      = Column(Integer, primary_key=True, index=True)
-    correlativo             = Column(String(20), nullable=False, unique=True, index=True)
+
+    # Correlativo perezoso: el borrador NO tiene número. Se asigna (año + número)
+    # al pasar a Enviada/Aprobada. El número reinicia por año. El correlativo
+    # mostrado se arma con la versión actual -> CO{AA}-{NNNN}-{version}.
+    correlativo_anio        = Column(Integer, nullable=True)
+    correlativo_num         = Column(Integer, nullable=True)
 
     # Datos del vendedor
     vendedor_nombre         = Column(String(255), nullable=True)
     vendedor_correo         = Column(String(100), nullable=True)
     vendedor_tel            = Column(String(30), nullable=True)
-    version                 = Column(String(10), default="1.0")
+    version                 = Column(String(10), default="A1")
 
     # Datos del cliente
     cliente_nombre          = Column(String(255), nullable=False)
@@ -50,7 +59,8 @@ class Cotizacion(Base):
     # Configuración financiera
     moneda                  = Column(String(20), nullable=False, default="Soles (PEN)")
     tipo_cambio             = Column(Numeric(8, 4), nullable=False, default=3.80)
-    utilidad                = Column(Numeric(6, 4), nullable=False, default=1.30)
+    utilidad                = Column(Numeric(6, 4), nullable=False, default=1.18)
+    # estados válidos: borrador, enviada, aprobada, rechazada
     mostrar_precios         = Column(Boolean, nullable=False, default=True)
 
     # Condiciones (almacenadas como JSON arrays)
@@ -78,6 +88,15 @@ class Cotizacion(Base):
     # Relaciones
     items = relationship("ItemCotizacion", back_populates="cotizacion",
                          cascade="all, delete-orphan", order_by="ItemCotizacion.orden")
+
+    @property
+    def correlativo(self) -> str | None:
+        """Correlativo completo CO{AA}-{NNNN}-{version}. None si aún es borrador."""
+        if self.correlativo_anio is None or self.correlativo_num is None:
+            return None
+        base = f"CO{self.correlativo_anio % 100:02d}-{self.correlativo_num:04d}"
+        ver = (self.version or "").strip()
+        return f"{base}-{ver}" if ver else base
 
 
 class ItemCotizacion(Base):
@@ -148,6 +167,15 @@ class DatosCliente(Base):
     telefono    = Column(String(50), nullable=True)
     created_at  = Column(DateTime(timezone=True), server_default=func.now())
 
+
+
+class CorrelativoContador(Base):
+    """Contador de correlativos por año. Solo avanza (nunca retrocede),
+    por eso eliminar borradores no reutiliza ni saltea números."""
+    __tablename__ = "correlativo_contador"
+
+    anio          = Column(Integer, primary_key=True)   # año completo, ej. 2026
+    ultimo_numero = Column(Integer, nullable=False, default=0)
 
 
 class Usuario(Base):

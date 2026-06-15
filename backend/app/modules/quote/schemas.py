@@ -1,8 +1,8 @@
 from __future__ import annotations
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 # ─── PRODUCTO ─────────────────────────────────────────────────────────────────
@@ -18,7 +18,22 @@ class ProductoBase(BaseModel):
 
 
 class ProductoCreate(ProductoBase):
-    pass
+    descripcion: str
+    marca:       str
+
+    @field_validator("nombre", "descripcion", "marca", "categoria")
+    @classmethod
+    def check_non_empty(cls, v: str, info) -> str:
+        if not v or not v.strip():
+            raise ValueError(f"El campo {info.field_name} no puede estar vacío")
+        return v.strip()
+
+    @field_validator("precio")
+    @classmethod
+    def check_positive_price(cls, v: Decimal) -> Decimal:
+        if v <= 0:
+            raise ValueError("El precio de venta debe ser mayor a 0")
+        return v
 
 
 class ProductoUpdate(BaseModel):
@@ -30,6 +45,22 @@ class ProductoUpdate(BaseModel):
     precio:      Optional[Decimal] = None
     moneda:      Optional[str] = None
     activo:      Optional[bool] = None
+
+    @field_validator("nombre", "descripcion", "marca", "categoria")
+    @classmethod
+    def check_non_empty_optional(cls, v: Optional[str], info) -> Optional[str]:
+        if v is not None:
+            if not v or not v.strip():
+                raise ValueError(f"El campo {info.field_name} no puede estar vacío")
+            return v.strip()
+        return v
+
+    @field_validator("precio")
+    @classmethod
+    def check_positive_price_optional(cls, v: Optional[Decimal]) -> Optional[Decimal]:
+        if v is not None and v <= 0:
+            raise ValueError("El precio de venta debe ser mayor a 0")
+        return v
 
 
 class ProductoOut(ProductoBase):
@@ -86,7 +117,25 @@ class ItemOut(ItemBase):
     @classmethod
     def from_orm_item(cls, item) -> "ItemOut":
         data = {c.name: getattr(item, c.name) for c in item.__table__.columns}
-        data["subtotal"] = Decimal(str(item.cantidad)) * Decimal(str(item.precio_unit))
+        cot = getattr(item, "cotizacion", None)
+        if cot is not None:
+            # Mismo cálculo (margen + conversión + redondeo) que calcular_totales,
+            # para que la suma de subtotales por línea cuadre con el resumen y el PDF.
+            from app.modules.quote.service import convertir_precio, _moneda_codigo
+            bruto = convertir_precio(
+                precio=float(item.precio_unit) * float(item.cantidad),
+                moneda_origen=item.moneda,
+                moneda_destino=_moneda_codigo(cot.moneda),
+                tipo_cambio=float(cot.tipo_cambio),
+                utilidad=float(cot.utilidad),
+            )
+            data["subtotal"] = Decimal(str(bruto)).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
+        else:
+            data["subtotal"] = (
+                Decimal(str(item.cantidad)) * Decimal(str(item.precio_unit))
+            ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         return cls(**data)
 
 
@@ -96,7 +145,7 @@ class CotizacionBase(BaseModel):
     vendedor_nombre:        Optional[str] = None
     vendedor_correo:        Optional[str] = None
     vendedor_tel:           Optional[str] = None
-    version:                Optional[str] = "1.0"
+    version:                Optional[str] = "A1"
     cliente_nombre:         str
     cliente_doc:            Optional[str] = None
     tipo_doc:               Optional[str] = "RUC"
@@ -107,7 +156,7 @@ class CotizacionBase(BaseModel):
     cliente_tel:            Optional[str] = None
     moneda:                 str = "Soles (PEN)"
     tipo_cambio:            Decimal = Decimal("3.80")
-    utilidad:               Decimal = Decimal("1.30")
+    utilidad:               Decimal = Decimal("1.18")
     mostrar_precios:        bool = True
     cond_tecnicas:                   list[str] = []
     cond_comerciales:                list[str] = []
@@ -173,7 +222,7 @@ class CotizacionOut(CotizacionBase):
     model_config = ConfigDict(from_attributes=True)
 
     id:          int
-    correlativo: str
+    correlativo: Optional[str] = None   # None mientras es borrador
     estado:      str
     created_at:  datetime
     updated_at:  datetime
@@ -185,11 +234,15 @@ class CotizacionListItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id:             int
-    correlativo:    str
+    correlativo:    Optional[str] = None   # None mientras es borrador
     cliente_nombre: str
     moneda:         str
     estado:         str
     created_at:     datetime
+
+
+class EstadoUpdate(BaseModel):
+    estado: str
 
 
 # ─── EMPRESA ──────────────────────────────────────────────────────────────────

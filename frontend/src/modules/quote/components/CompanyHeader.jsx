@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuoteStore } from '../store/quoteStore';
 import { quoteApi } from '../api/quoteApi';
 
-export default function CompanyHeader() {
+export default function CompanyHeader({ readOnly = false }) {
   const { cotizacion, updateHeader } = useQuoteStore();
   const [empresa, setEmpresa] = useState(null);
   const [vendedores, setVendedores] = useState([]);
@@ -98,6 +98,7 @@ export default function CompanyHeader() {
             type="text"
             value={cotizacion.version || ''}
             onChange={handleVersionChange}
+            disabled={readOnly}
             className="input-field"
             placeholder="ej: A, B, B1"
             style={{ width: '100px' }}
@@ -111,6 +112,7 @@ export default function CompanyHeader() {
           <select
             value={cotizacion.vendedor_nombre || ''}
             onChange={handleSellerChange}
+            disabled={readOnly}
             className="input-field"
           >
             <option value="">Seleccione vendedor...</option>

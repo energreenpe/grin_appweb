@@ -26,12 +26,28 @@ export const useQuoteStore = create((set, get) => ({
   updateHeader: async (id, data) => {
     try {
       const updated = await quoteApi.updateCotizacion(id, data);
-      set({ 
+      set({
         cotizacion: updated,
-        totales: updated.totales 
+        items: updated.items || [],   // subtotales reconvertidos (moneda/TC/margen)
+        totales: updated.totales
       });
     } catch (err) {
       console.error(err);
+    }
+  },
+
+  changeEstado: async (id, estado) => {
+    try {
+      const updated = await quoteApi.changeEstado(id, estado);
+      set({
+        cotizacion: updated,
+        items: updated.items || [],
+        totales: updated.totales
+      });
+      return { ok: true };
+    } catch (err) {
+      const error = err?.response?.data?.detail || 'No se pudo cambiar el estado';
+      return { ok: false, error };
     }
   },
 

@@ -42,6 +42,26 @@ export default function ProductFormModal({ product, onSave, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!formData.nombre.trim()) {
+      alert("El Nombre del Producto es obligatorio.");
+      return;
+    }
+    if (!formData.descripcion.trim()) {
+      alert("La Descripción es obligatoria.");
+      return;
+    }
+    if (!formData.marca.trim()) {
+      alert("La Marca es obligatoria.");
+      return;
+    }
+    if (!formData.categoria.trim()) {
+      alert("La Categoría es obligatoria.");
+      return;
+    }
+    if (Number(formData.precio) <= 0) {
+      alert("El precio de venta debe ser mayor a 0.");
+      return;
+    }
     onSave(formData);
   };
 
@@ -64,13 +84,13 @@ export default function ProductFormModal({ product, onSave, onCancel }) {
           </div>
 
           <div>
-            <label className="form-label">Descripción</label>
-            <textarea name="descripcion" value={formData.descripcion} onChange={handleChange} className="input-field" rows="3" />
+            <label className="form-label">Descripción *</label>
+            <textarea name="descripcion" value={formData.descripcion} onChange={handleChange} className="input-field" rows="3" required />
           </div>
 
           <div>
-            <label className="form-label">Marca</label>
-            <input type="text" name="marca" value={formData.marca} onChange={handleChange} className="input-field" />
+            <label className="form-label">Marca *</label>
+            <input type="text" name="marca" value={formData.marca} onChange={handleChange} className="input-field" required />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -94,7 +114,7 @@ export default function ProductFormModal({ product, onSave, onCancel }) {
             </div>
             <div>
               <label className="form-label">Precio Venta *</label>
-              <input type="number" step="0.01" name="precio" value={formData.precio} onChange={handleChange} className="input-field" required />
+              <input type="number" step="0.01" min="0.01" name="precio" value={formData.precio} onChange={handleChange} className="input-field" required />
             </div>
           </div>
 

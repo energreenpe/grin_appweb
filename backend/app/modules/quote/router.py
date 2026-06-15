@@ -115,6 +115,32 @@ def delete_cotizacion(cotizacion_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Cotización no encontrada")
 
 
+@router.put("/cotizaciones/{cotizacion_id}/estado", response_model=schemas.CotizacionOut)
+def change_estado(cotizacion_id: int, data: schemas.EstadoUpdate, db: Session = Depends(get_db)):
+    """Cambia el estado validando la transición (borrador → enviada/aprobada,
+    enviada → aprobada/rechazada, aprobada → rechazada)."""
+    cot = service.change_estado(db, cotizacion_id, data.estado)
+    if not cot:
+        raise HTTPException(status_code=404, detail="Cotización no encontrada")
+    out = schemas.CotizacionOut.model_validate(cot)
+    out.totales = service.calcular_totales(cot.items, cot)
+    out.items = [schemas.ItemOut.from_orm_item(i) for i in cot.items]
+    return out
+
+
+@router.post("/cotizaciones/{cotizacion_id}/duplicar",
+             response_model=schemas.CotizacionOut, status_code=status.HTTP_201_CREATED)
+def duplicar_cotizacion(cotizacion_id: int, db: Session = Depends(get_db)):
+    """Clona la cotización como nuevo borrador (sin correlativo), usándola como plantilla."""
+    nueva = service.duplicar_cotizacion(db, cotizacion_id)
+    if not nueva:
+        raise HTTPException(status_code=404, detail="Cotización no encontrada")
+    out = schemas.CotizacionOut.model_validate(nueva)
+    out.totales = service.calcular_totales(nueva.items, nueva)
+    out.items = [schemas.ItemOut.from_orm_item(i) for i in nueva.items]
+    return out
+
+
 # ── ÍTEMS ─────────────────────────────────────────────────────────────────────
 
 @router.post(
@@ -168,10 +194,15 @@ def delete_item(cotizacion_id: int, item_id: int, db: Session = Depends(get_db))
 
 @router.get("/cotizaciones/{cotizacion_id}/pdf")
 def download_pdf(cotizacion_id: int, db: Session = Depends(get_db)):
-    """Genera y descarga el PDF de la cotización (diseño réplica exacta)."""
+    """Genera y descarga el PDF. Si está en borrador, lo marca como Enviada
+    (asignando su correlativo) automáticamente antes de generar."""
     cot = service.get_cotizacion(db, cotizacion_id)
     if not cot:
         raise HTTPException(status_code=404, detail="Cotización no encontrada")
+
+    # Al generar el PDF de un borrador, pasa a "enviada" y obtiene su número.
+    if cot.estado == "borrador":
+        cot = service.change_estado(db, cotizacion_id, "enviada")
 
     empresa = service.get_empresa(db)
     pdf_bytes = generar_pdf_cotizacion(cot, cot.items, empresa)

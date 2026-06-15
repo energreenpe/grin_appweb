@@ -10,27 +10,57 @@ import QuoteSummary from '../components/QuoteSummary';
 import QuoteConditions from '../components/QuoteConditions';
 import ServiceFormModal from '../components/ServiceFormModal';
 
+const ESTADO_COLORS = {
+  borrador:  { bg: 'rgba(255,255,255,0.1)',  fg: 'var(--text-secondary)' },
+  enviada:   { bg: 'rgba(59,130,246,0.2)',   fg: '#60a5fa' },
+  aprobada:  { bg: 'rgba(74,222,128,0.2)',   fg: '#4ade80' },
+  rechazada: { bg: 'rgba(248,113,113,0.2)',  fg: '#f87171' },
+};
+
 export default function QuoteEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { cotizacion, loadCotizacion, loading, error, addItem } = useQuoteStore();
+  const { cotizacion, loadCotizacion, loading, error, addItem, changeEstado } = useQuoteStore();
   const [showServiceModal, setShowServiceModal] = useState(false);
 
   useEffect(() => {
     if (id) loadCotizacion(id);
   }, [id, loadCotizacion]);
 
+  const estado = cotizacion?.estado;
+  const readOnly = !!cotizacion && !['borrador', 'enviada'].includes(estado);
+
   const handleDownloadPdf = async () => {
     if (!id || !cotizacion) return;
     try {
-      const defaultName = `COT2026-${cotizacion.correlativo}-${cotizacion.version || '1.0'}_${cotizacion.cliente_nombre.replace(/ /g, '_')}.pdf`;
+      const base = cotizacion.correlativo || `COTIZACION-${cotizacion.id}`;
+      const defaultName = `${base}_${(cotizacion.cliente_nombre || 'cliente').replace(/ /g, '_')}.pdf`;
       const fileName = prompt("Confirma o edita el nombre del archivo PDF:", defaultName);
       if (!fileName) return; // User cancelled
 
       await quoteApi.downloadPdf(id, fileName);
+      // Generar el PDF de un borrador lo pasa a "Enviada" y le asigna correlativo: recargar.
+      await loadCotizacion(id);
     } catch (err) {
       console.error("Error downloading PDF", err);
       alert("Error al generar el PDF");
+    }
+  };
+
+  const handleEstado = async (nuevo) => {
+    const verbo = { enviada: 'marcar como Enviada', aprobada: 'Aprobar', rechazada: 'Rechazar' };
+    if (!window.confirm(`¿Seguro que deseas ${verbo[nuevo] || 'cambiar el estado de'} esta cotización?`)) return;
+    const res = await changeEstado(cotizacion.id, nuevo);
+    if (!res.ok) alert(res.error);
+  };
+
+  const handleDuplicate = async () => {
+    try {
+      const nueva = await quoteApi.duplicar(cotizacion.id);
+      navigate(`/quote/${nueva.id}`);
+    } catch (err) {
+      console.error(err);
+      alert('No se pudo duplicar la cotización');
     }
   };
 
@@ -56,20 +86,49 @@ export default function QuoteEditor() {
             ← Volver a lista
           </button>
           <h1 style={{ fontSize: '1.8rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {cotizacion.correlativo}
-            <span style={{ fontSize: '1rem', padding: '4px 10px', background: 'rgba(255,255,255,0.1)', borderRadius: '20px' }}>
-              {cotizacion.estado}
+            {cotizacion.correlativo || 'Borrador (sin número)'}
+            <span style={{
+              fontSize: '0.9rem', padding: '4px 12px', borderRadius: '20px',
+              textTransform: 'capitalize',
+              background: ESTADO_COLORS[estado]?.bg || 'rgba(255,255,255,0.1)',
+              color: ESTADO_COLORS[estado]?.fg || 'var(--text-secondary)',
+            }}>
+              {estado}
             </span>
           </h1>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button className="btn btn-secondary">Guardar Borrador</button>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Guardado automático</span>
+
+          {estado === 'borrador' && (
+            <button onClick={() => handleEstado('enviada')} className="btn btn-secondary">Marcar Enviada</button>
+          )}
+          {(estado === 'borrador' || estado === 'enviada') && (
+            <button onClick={() => handleEstado('aprobada')} className="btn btn-secondary"
+              style={{ borderColor: '#4ade80', color: '#4ade80' }}>✓ Aprobar</button>
+          )}
+          {(estado === 'enviada' || estado === 'aprobada') && (
+            <button onClick={() => handleEstado('rechazada')} className="btn btn-danger">✗ Rechazar</button>
+          )}
+
+          <button onClick={handleDuplicate} className="btn btn-secondary">⧉ Duplicar</button>
           <button onClick={handleDownloadPdf} className="btn btn-primary" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <span>📄</span> Generar PDF
           </button>
         </div>
       </div>
+
+      {readOnly && (
+        <div style={{
+          padding: '0.75rem 1rem', borderRadius: 'var(--radius)',
+          background: 'rgba(255, 196, 0, 0.12)', border: '1px solid rgba(255, 196, 0, 0.4)',
+          color: '#ffca28', fontSize: '0.9rem',
+        }}>
+          🔒 Esta cotización está <strong>{estado}</strong> y es de <strong>solo lectura</strong>.
+          Usa <strong>Duplicar</strong> para crear una nueva versión editable.
+        </div>
+      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         
@@ -78,12 +137,12 @@ export default function QuoteEditor() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* Datos de Empresa */}
             <div className="glass-panel" style={{ padding: '1.5rem' }}>
-              <CompanyHeader />
+              <CompanyHeader readOnly={readOnly} />
             </div>
 
             {/* Datos del Cliente y Configuración */}
             <div className="glass-panel" style={{ padding: '1.5rem' }}>
-              <QuoteHeader />
+              <QuoteHeader readOnly={readOnly} />
             </div>
           </div>
 
@@ -93,27 +152,29 @@ export default function QuoteEditor() {
           </div>
         </div>
 
-        {/* Buscador de Productos (Ancho completo) */}
-        <div className="glass-panel" style={{ padding: '1.5rem', position: 'relative', zIndex: 50 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-            <h3 style={{ margin: 0 }}>Agregar Ítems</h3>
-            <button onClick={() => setShowServiceModal(true)} className="btn btn-primary" style={{ padding: '4px 12px', fontSize: '0.85rem' }}>
-              + Agregar Servicio
-            </button>
+        {/* Buscador de Productos (Ancho completo) — oculto en solo lectura */}
+        {!readOnly && (
+          <div className="glass-panel" style={{ padding: '1.5rem', position: 'relative', zIndex: 50 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+              <h3 style={{ margin: 0 }}>Agregar Ítems</h3>
+              <button onClick={() => setShowServiceModal(true)} className="btn btn-primary" style={{ padding: '4px 12px', fontSize: '0.85rem' }}>
+                + Agregar Servicio
+              </button>
+            </div>
+            <ProductSearch cotizacionId={cotizacion.id} />
           </div>
-          <ProductSearch cotizacionId={cotizacion.id} />
-        </div>
+        )}
 
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
           <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
             Detalle de Cotización
           </h3>
-          <QuoteTable cotizacionId={cotizacion.id} />
+          <QuoteTable cotizacionId={cotizacion.id} readOnly={readOnly} />
         </div>
 
         {/* Condiciones de Cotización */}
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
-          <QuoteConditions cotizacionId={cotizacion.id} />
+          <QuoteConditions cotizacionId={cotizacion.id} readOnly={readOnly} />
         </div>
       </div>
 

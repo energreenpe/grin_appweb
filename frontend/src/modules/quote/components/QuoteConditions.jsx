@@ -115,7 +115,7 @@ const BankCard = ({ cuenta, onChange }) => {
 };
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export default function QuoteConditions({ cotizacionId }) {
+export default function QuoteConditions({ cotizacionId, readOnly = false }) {
   const { cotizacion, updateHeader } = useQuoteStore();
   const [openSection, setOpenSection] = useState('tecnicas');
   const [plantillas, setPlantillas] = useState(null);
@@ -126,7 +126,10 @@ export default function QuoteConditions({ cotizacionId }) {
   }, []);
 
   const toggleSection = (id) => setOpenSection(openSection === id ? null : id);
-  const handleUpdate = async (field, value) => { await updateHeader(cotizacionId, { [field]: value }); };
+  const handleUpdate = async (field, value) => {
+    if (readOnly) return;   // cotización aprobada/rechazada: solo lectura
+    await updateHeader(cotizacionId, { [field]: value });
+  };
   const handleToggleVisibility = async (field) => { await handleUpdate(field, !cotizacion[field]); };
 
   const loadTemplate = async (field) => {
@@ -256,7 +259,10 @@ export default function QuoteConditions({ cotizacionId }) {
       <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
         Condiciones Contractuales y Financieras
       </h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div style={{
+        display: 'flex', flexDirection: 'column', gap: '10px',
+        ...(readOnly ? { pointerEvents: 'none', opacity: 0.7 } : {})
+      }}>
 
         <div style={{ border: '1px solid var(--border-color)', borderRadius: '6px' }}>
           {renderHeader('tecnicas', 'Condiciones Técnicas', 'cond_tecnicas', 'mostrar_cond_tecnicas')}

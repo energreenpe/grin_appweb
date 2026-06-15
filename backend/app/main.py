@@ -1,8 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from app.config import get_settings
 from app.modules.quote.router import router as quote_router
+from app.modules.quote.service import QuoteError
 from app.modules.inspector.router import router as inspector_router
 
 settings = get_settings()
@@ -23,6 +25,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── EXCEPCIONES DE NEGOCIO ────────────────────────────────────────────────────
+@app.exception_handler(QuoteError)
+async def quote_error_handler(request: Request, exc: QuoteError):
+    return JSONResponse(status_code=exc.code, content={"detail": exc.message})
+
 
 # ── ROUTERS — agregar aquí cada nuevo módulo ──────────────────────────────────
 app.include_router(quote_router, prefix="/api/quote", tags=["Quote"])

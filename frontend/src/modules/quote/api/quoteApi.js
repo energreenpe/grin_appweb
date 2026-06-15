@@ -21,7 +21,7 @@ export const quoteApi = {
 
   // Cotizaciones
   getCotizaciones: async () => {
-    const res = await api.get('/quote/cotizaciones');
+    const res = await api.get('/quote/cotizaciones', { params: { limit: 1000 } });
     return res.data;
   },
   
@@ -42,6 +42,16 @@ export const quoteApi = {
   
   deleteCotizacion: async (id) => {
     await api.delete(`/quote/cotizaciones/${id}`);
+  },
+
+  changeEstado: async (id, estado) => {
+    const res = await api.put(`/quote/cotizaciones/${id}/estado`, { estado });
+    return res.data;
+  },
+
+  duplicar: async (id) => {
+    const res = await api.post(`/quote/cotizaciones/${id}/duplicar`);
+    return res.data;
   },
 
   // Ítems
