@@ -182,26 +182,26 @@ export default function QuoteConditions({ cotizacionId, readOnly = false }) {
     return (
       <div style={{
         padding: '1rem', background: 'rgba(255,255,255,0.05)', display: 'flex',
-        justifyContent: 'space-between', alignItems: 'center',
+        justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem',
         borderBottom: openSection === id ? '1px solid var(--border-color)' : 'none',
         borderRadius: openSection === id ? '6px 6px 0 0' : '6px',
         opacity: isVisible ? 1 : 0.65,
       }}>
-        <h4 onClick={() => toggleSection(id)} style={{ margin: 0, flex: 1, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-          {openSection === id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        <h4 onClick={() => toggleSection(id)} style={{ margin: 0, flex: '1 1 200px', minWidth: 0, display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+          {openSection === id ? <ChevronUp size={20} style={{ flexShrink: 0 }} /> : <ChevronDown size={20} style={{ flexShrink: 0 }} />}
           {title}
-          {!isVisible && <span style={{ fontSize: '0.7rem', background: 'rgba(255,80,80,0.2)', color: '#ff7070', padding: '2px 8px', borderRadius: '10px' }}>No aparece en PDF</span>}
+          {!isVisible && <span style={{ fontSize: '0.7rem', background: 'rgba(255,80,80,0.2)', color: '#ff7070', padding: '2px 8px', borderRadius: '10px', whiteSpace: 'nowrap' }}>No aparece en PDF</span>}
         </h4>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <ToggleSwitch checked={isVisible} onChange={() => handleToggleVisibility(fieldMostrar)} />
           {fieldCond && (
             <>
               <button onClick={(e) => { e.stopPropagation(); loadTemplate(fieldCond); }} className="btn btn-secondary"
-                style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'flex', gap: '5px', alignItems: 'center' }}>
+                style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'flex', gap: '5px', alignItems: 'center', whiteSpace: 'nowrap', flexShrink: 0 }}>
                 <Download size={14} /> Cargar Plantilla
               </button>
               <button onClick={(e) => { e.stopPropagation(); saveTemplate(fieldCond); }} className="btn btn-primary"
-                style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'flex', gap: '5px', alignItems: 'center' }}
+                style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'flex', gap: '5px', alignItems: 'center', whiteSpace: 'nowrap', flexShrink: 0 }}
                 disabled={loadingTemplate}>
                 <Save size={14} /> Guardar Global
               </button>

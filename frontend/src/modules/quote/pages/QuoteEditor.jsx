@@ -10,6 +10,7 @@ import QuoteSummary from '../components/QuoteSummary';
 import QuoteConditions from '../components/QuoteConditions';
 import ServiceFormModal from '../components/ServiceFormModal';
 import { notify } from '../../../lib/notify';
+import { useIsMobile } from '../../../lib/useIsMobile';
 
 const ESTADO_COLORS = {
   borrador:  { bg: 'rgba(255,255,255,0.1)',  fg: 'var(--text-secondary)' },
@@ -35,6 +36,7 @@ export default function QuoteEditor() {
 
   const estado = cotizacion?.estado;
   const readOnly = !!cotizacion && !['borrador', 'enviada'].includes(estado);
+  const isMobile = useIsMobile();
 
   const handleDownloadPdf = async () => {
     if (!id || !cotizacion) return;
@@ -84,7 +86,7 @@ export default function QuoteEditor() {
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Header y Acciones */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <button
             onClick={() => navigate('/quote')}
@@ -106,7 +108,7 @@ export default function QuoteEditor() {
           </h1>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Guardado automático</span>
 
           {estado === 'borrador' && (
@@ -140,8 +142,9 @@ export default function QuoteEditor() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         
-        {/* Cabecera Superior: Empresa/Cliente (Izquierda) y Resumen (Derecha) */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '1.5rem', alignItems: 'stretch' }}>
+        {/* Cabecera Superior: en escritorio Empresa/Cliente (izq.) + Resumen (der., 350px);
+            en móvil una sola columna -> Empresa, Cliente y luego Resumen apilados. */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 350px', gap: '1.5rem', alignItems: 'stretch' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* Datos de Empresa */}
             <div className="glass-panel" style={{ padding: '1.5rem' }}>
