@@ -1,3 +1,10 @@
+# requirements.txt — Dependencias DIRECTAS (curadas, multiplataforma).
+# Úsalo para desarrollo y para deploys donde quieras que pip resuelva las
+# transitivas según el SO (ej. uvloop en Linux). Para un deploy EXACTO/bit-a-bit
+# usa requirements.lock.txt (freeze completo). Si agregas/actualizas una dep aquí,
+# regenera el lock:  pip install -r requirements.txt && pip freeze > requirements.lock.txt
+# (regenéralo en el mismo SO de destino).
+
 fastapi==0.111.0
 uvicorn[standard]==0.29.0
 sqlalchemy==2.0.30
@@ -12,3 +19,4 @@ openpyxl==3.1.2
 pypdf==4.2.0
 python-multipart==0.0.9
 xhtml2pdf==0.2.16
+pillow==12.2.0

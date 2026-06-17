@@ -1,9 +1,11 @@
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import Toaster from './Toaster';
 
 export default function Layout() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-color)' }}>
+      <Toaster />
       <Sidebar />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {/* Topbar opcional */}

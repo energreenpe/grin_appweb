@@ -9,6 +9,7 @@ import QuoteTable from '../components/QuoteTable';
 import QuoteSummary from '../components/QuoteSummary';
 import QuoteConditions from '../components/QuoteConditions';
 import ServiceFormModal from '../components/ServiceFormModal';
+import { notify } from '../../../lib/notify';
 
 const ESTADO_COLORS = {
   borrador:  { bg: 'rgba(255,255,255,0.1)',  fg: 'var(--text-secondary)' },
@@ -20,12 +21,17 @@ const ESTADO_COLORS = {
 export default function QuoteEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { cotizacion, loadCotizacion, loading, error, addItem, changeEstado } = useQuoteStore();
+  const { cotizacion, loadCotizacion, loading, error, addItem, changeEstado, flushPending } = useQuoteStore();
   const [showServiceModal, setShowServiceModal] = useState(false);
 
   useEffect(() => {
     if (id) loadCotizacion(id);
   }, [id, loadCotizacion]);
+
+  // Al salir del editor, persistir cualquier cambio pendiente del debounce.
+  useEffect(() => {
+    return () => { useQuoteStore.getState().flushPending(); };
+  }, []);
 
   const estado = cotizacion?.estado;
   const readOnly = !!cotizacion && !['borrador', 'enviada'].includes(estado);
@@ -33,6 +39,8 @@ export default function QuoteEditor() {
   const handleDownloadPdf = async () => {
     if (!id || !cotizacion) return;
     try {
+      // Guardar lo último que se tecleó (debounce) antes de generar el PDF.
+      await flushPending();
       const base = cotizacion.correlativo || `COTIZACION-${cotizacion.id}`;
       const defaultName = `${base}_${(cotizacion.cliente_nombre || 'cliente').replace(/ /g, '_')}.pdf`;
       const fileName = prompt("Confirma o edita el nombre del archivo PDF:", defaultName);
@@ -43,7 +51,7 @@ export default function QuoteEditor() {
       await loadCotizacion(id);
     } catch (err) {
       console.error("Error downloading PDF", err);
-      alert("Error al generar el PDF");
+      notify('No se pudo generar el PDF. Revisa tu conexión.');
     }
   };
 
@@ -51,7 +59,7 @@ export default function QuoteEditor() {
     const verbo = { enviada: 'marcar como Enviada', aprobada: 'Aprobar', rechazada: 'Rechazar' };
     if (!window.confirm(`¿Seguro que deseas ${verbo[nuevo] || 'cambiar el estado de'} esta cotización?`)) return;
     const res = await changeEstado(cotizacion.id, nuevo);
-    if (!res.ok) alert(res.error);
+    if (!res.ok) notify(res.error);
   };
 
   const handleDuplicate = async () => {
@@ -60,7 +68,7 @@ export default function QuoteEditor() {
       navigate(`/quote/${nueva.id}`);
     } catch (err) {
       console.error(err);
-      alert('No se pudo duplicar la cotización');
+      notify('No se pudo duplicar la cotización. Revisa tu conexión.');
     }
   };
 

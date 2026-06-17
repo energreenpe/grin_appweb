@@ -1,15 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuoteStore } from '../store/quoteStore';
 import { quoteApi } from '../api/quoteApi';
+import { notify } from '../../../lib/notify';
 
 export default function QuoteHeader({ readOnly = false }) {
   const { cotizacion, updateHeader } = useQuoteStore();
   const [clientes, setClientes] = useState([]);
   const [tipoCambio, setTipoCambio] = useState('');
 
+  const loadClientes = useCallback(async () => {
+    try {
+      const data = await quoteApi.getClientes();
+      setClientes(data);
+    } catch (err) {
+      console.error(err);
+      notify('No se pudo cargar la lista de clientes.');
+    }
+  }, []);
+
   useEffect(() => {
     loadClientes();
-  }, []);
+  }, [loadClientes]);
 
   // Sincronizar el tipo de cambio desde la base de datos (con 2 decimales)
   useEffect(() => {
@@ -20,33 +31,33 @@ export default function QuoteHeader({ readOnly = false }) {
     }
   }, [cotizacion?.id, cotizacion?.tipo_cambio]);
 
-  const loadClientes = async () => {
-    try {
-      const data = await quoteApi.getClientes();
-      setClientes(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   if (!cotizacion) return null;
+
+  // Autocompleta todos los campos del cliente desde un registro existente
+  const fillFromCliente = (updates, c) => {
+    updates.cliente_nombre     = c.nombre || '';
+    updates.cliente_doc        = c.documento || '';
+    updates.cliente_dir        = c.direccion || '';
+    updates.cliente_atencion   = c.atencion || '';
+    updates.cliente_referencia = c.referencia || '';
+    updates.cliente_correo     = c.correo || '';
+    updates.cliente_tel        = c.telefono || '';
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
+
     const updates = { [name]: type === 'checkbox' ? checked : value };
 
-    // Si cambió el nombre del cliente, ver si existe en la BD para autocompletar
+    // Autocompletar al reconocer al cliente por nombre o por RUC/DNI.
+    // NOTA: el cliente NO se guarda aquí; se persiste recién al "Generar PDF".
     if (name === 'cliente_nombre') {
       const match = clientes.find(c => c.nombre === value);
-      if (match) {
-        updates.cliente_doc = match.documento || '';
-        updates.cliente_dir = match.direccion || '';
-        updates.cliente_atencion = match.atencion || '';
-        updates.cliente_referencia = match.referencia || '';
-        updates.cliente_correo = match.correo || '';
-        updates.cliente_tel = match.telefono || '';
-      }
+      if (match) fillFromCliente(updates, match);
+    }
+    if (name === 'cliente_doc') {
+      const match = clientes.find(c => c.documento && c.documento === value);
+      if (match) fillFromCliente(updates, match);
     }
 
     updateHeader(cotizacion.id, updates);
@@ -59,25 +70,6 @@ export default function QuoteHeader({ readOnly = false }) {
     if (isNaN(pct) || pct < 0) pct = 0;
     const utilidad = (1 + pct / 100).toFixed(2);
     updateHeader(cotizacion.id, { utilidad });
-  };
-
-  const handleBlurCliente = async (e) => {
-    // Cuando sale del campo cliente_nombre, guardarlo en BD si no existe o actualizarlo
-    if (!cotizacion.cliente_nombre) return;
-    try {
-      await quoteApi.createCliente({
-        nombre: cotizacion.cliente_nombre,
-        documento: cotizacion.cliente_doc || '',
-        direccion: cotizacion.cliente_dir || '',
-        atencion: cotizacion.cliente_atencion || '',
-        referencia: cotizacion.cliente_referencia || '',
-        correo: cotizacion.cliente_correo || '',
-        telefono: cotizacion.cliente_tel || ''
-      });
-      loadClientes(); // refrescar lista
-    } catch (err) {
-      console.error("Error al guardar cliente", err);
-    }
   };
 
   return (
@@ -95,7 +87,6 @@ export default function QuoteHeader({ readOnly = false }) {
             list="clientes-list"
             value={cotizacion.cliente_nombre || ''} 
             onChange={handleChange}
-            onBlur={handleBlurCliente}
             className="input-field"
             placeholder="Nombre del cliente"
           />
@@ -107,15 +98,20 @@ export default function QuoteHeader({ readOnly = false }) {
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>RUC / DNI</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             name="cliente_doc"
-            value={cotizacion.cliente_doc || ''} 
+            list="clientes-doc-list"
+            value={cotizacion.cliente_doc || ''}
             onChange={handleChange}
-            onBlur={handleBlurCliente}
             className="input-field"
             placeholder="Documento"
           />
+          <datalist id="clientes-doc-list">
+            {clientes.filter(c => c.documento).map(c => (
+              <option key={c.id} value={c.documento}>{c.nombre}</option>
+            ))}
+          </datalist>
         </div>
       </div>
 
@@ -127,7 +123,6 @@ export default function QuoteHeader({ readOnly = false }) {
             name="cliente_dir"
             value={cotizacion.cliente_dir || ''} 
             onChange={handleChange}
-            onBlur={handleBlurCliente}
             className="input-field"
             placeholder="Dirección del cliente"
           />
@@ -142,7 +137,6 @@ export default function QuoteHeader({ readOnly = false }) {
             name="cliente_atencion"
             value={cotizacion.cliente_atencion || ''} 
             onChange={handleChange}
-            onBlur={handleBlurCliente}
             className="input-field"
             placeholder="Atención a..."
           />
@@ -154,7 +148,6 @@ export default function QuoteHeader({ readOnly = false }) {
             name="cliente_referencia"
             value={cotizacion.cliente_referencia || ''} 
             onChange={handleChange}
-            onBlur={handleBlurCliente}
             className="input-field"
             placeholder="Referencia de ubicación"
           />
@@ -169,7 +162,6 @@ export default function QuoteHeader({ readOnly = false }) {
             name="cliente_correo"
             value={cotizacion.cliente_correo || ''} 
             onChange={handleChange}
-            onBlur={handleBlurCliente}
             className="input-field"
             placeholder="correo@cliente.com"
           />
@@ -181,7 +173,6 @@ export default function QuoteHeader({ readOnly = false }) {
             name="cliente_tel"
             value={cotizacion.cliente_tel || ''} 
             onChange={handleChange}
-            onBlur={handleBlurCliente}
             className="input-field"
             placeholder="Teléfono del cliente"
           />

@@ -5,9 +5,7 @@ Mismas coordenadas, mismas fuentes, mismo layout — réplica exacta del diseño
 """
 from __future__ import annotations
 
-import base64
 import datetime
-import json
 import os
 from collections import defaultdict
 from io import BytesIO
@@ -138,54 +136,10 @@ def generar_pdf_cotizacion(
     c = canvas.Canvas(buffer, pagesize=A4)
     ancho, alto = A4
 
-    # ── Metadata / JSON embebido ──────────────────────────────────────────────
-    datos_cotizacion = {
-        "version_json": "1.0",
-        "correlativo": cotizacion.correlativo,
-        "datos_empresa": {
-            "correo": empresa.email or "",
-            "vendedor": cotizacion.vendedor_nombre or "",
-            "telefono": cotizacion.vendedor_tel or "",
-            "version": cotizacion.version or "1.0",
-        },
-        "datos_cliente": {
-            "senores": cotizacion.cliente_nombre,
-            "ruc": cotizacion.cliente_doc or "",
-            "direccion": cotizacion.cliente_dir or "",
-            "atencion": cotizacion.cliente_atencion or "",
-            "referencia": cotizacion.cliente_referencia or "",
-            "correo_cliente": cotizacion.cliente_correo or "",
-            "celular_cliente": cotizacion.cliente_tel or "",
-        },
-        "configuracion": {
-            "moneda": cotizacion.moneda,
-            "mostrar_precios": cotizacion.mostrar_precios,
-            "tipo_cambio": float(cotizacion.tipo_cambio),
-            "utilidad": float(cotizacion.utilidad),
-        },
-        "productos": [
-            {
-                "cantidad": float(item.cantidad),
-                "unidad": item.unidad,
-                "descripcion": item.descripcion if item.descripcion else item.nombre,
-                "precio": float(item.precio_unit),
-                "subtotal": float(item.cantidad) * float(item.precio_unit),
-                "partition": item.particion,
-                "subpartition": item.subparticion or "",
-            }
-            for item in items
-        ],
-    }
-    json_encoded = base64.b64encode(
-        json.dumps(datos_cotizacion, ensure_ascii=False).encode("utf-8")
-    ).decode("utf-8")
-
-    fecha_num = datetime.datetime.now().strftime("%Y")
-    num_cot   = cotizacion.correlativo.split("-")[-1] if cotizacion.correlativo else "0001"
-
-    c.setTitle(f"Cotización {cotizacion.correlativo}")
-    c.setAuthor("Energreen Perú - EnergiAI")
-    c.setSubject(json_encoded)
+    # ── Metadata del documento ────────────────────────────────────────────────
+    c.setTitle(f"Cotización {cotizacion.correlativo or 'Borrador'}")
+    c.setAuthor("Energreen Perú")
+    c.setSubject(f"Cotización {cotizacion.correlativo or ''}")
 
     MARGIN_TOP    = 40
     MARGIN_BOTTOM = 40
@@ -196,19 +150,18 @@ def generar_pdf_cotizacion(
     logo_x, logo_y = 30, alto - 95
     logo_w, logo_h = 85, 75
     
-    logo_path = None
-    if empresa.logo_path and os.path.exists(empresa.logo_path):
-        logo_path = empresa.logo_path
+    from app import storage
+    logo_path = storage.resolve(empresa.logo_path)
 
     if logo_path:
         try:
-            c.drawImage(logo_path, logo_x, logo_y, width=logo_w, height=logo_h)
+            c.drawImage(logo_path, logo_x, logo_y, width=logo_w, height=logo_h, mask="auto")
         except Exception:
-            c.setFont("Helvetica-Bold", 12)
-            c.drawString(logo_x, logo_y + 20, "Energreen Perú")
+            c.setFont("Helvetica-Bold", 10)
+            c.drawString(logo_x, logo_y + 35, "Insertar logo")
     else:
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(logo_x, logo_y + 20, "Energreen Perú")
+        c.setFont("Helvetica-Bold", 10)
+        c.drawString(logo_x, logo_y + 35, "Insertar logo")
 
     # ── Datos empresa (izquierda) ────────────────────────────────────────────
     c.setFont("Helvetica-Bold", 7)
@@ -528,22 +481,37 @@ def generar_pdf_cotizacion(
             col_x  = left_x if idx % 2 == 0 else right_x
             y_base = y_cond
 
-            # Resolver ruta del logo desde assets legacy
-            logo_filename = cuenta.get("logo", "")
-            logo_path_resolved = os.path.abspath(os.path.join(_ASSETS_DIR, logo_filename))
-            if os.path.exists(logo_path_resolved):
+            # Resolver el logo del banco: subido por el usuario (uploads/) o,
+            # por compatibilidad, un nombre suelto en assets/banks.
+            from app import storage
+            logo_ref = cuenta.get("logo", "")
+            logo_path_resolved = None
+            if logo_ref:
+                if logo_ref.startswith("uploads/"):
+                    logo_path_resolved = storage.resolve(logo_ref)
+                else:
+                    p = os.path.abspath(os.path.join(_ASSETS_DIR, logo_ref))
+                    logo_path_resolved = p if os.path.exists(p) else None
+
+            if logo_path_resolved:
                 try:
                     c.drawImage(logo_path_resolved, col_x, y_base - 45, width=80, height=25, mask="auto")
                 except Exception:
-                    c.setFont("Helvetica-Bold", 6)
-                    c.drawString(col_x, y_base - 20, f"[{cuenta.get('banco','')}]")
+                    c.setFont("Helvetica-Bold", 7)
+                    c.drawString(col_x, y_base - 20, cuenta.get('banco', ''))
             else:
                 c.setFont("Helvetica-Bold", 7)
                 c.drawString(col_x, y_base - 20, cuenta.get('banco', ''))
 
-            datos = cuenta.get("datos", {})
+            # Campos dinámicos: lista de {label, valor}. Compat con la estructura
+            # antigua datos={label: valor}.
+            campos = cuenta.get("campos")
+            if campos is None:
+                campos = [{"label": k, "valor": v} for k, v in (cuenta.get("datos") or {}).items()]
             dy = 20
-            for label, valor in datos.items():
+            for campo in campos:
+                label = campo.get("label", "")
+                valor = campo.get("valor", "")
                 c.setFont("Helvetica-Bold", 6)
                 c.drawString(col_x + 90, y_base - dy, f"{label}:")
                 c.setFont("Helvetica", 6)

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuoteStore } from '../store/quoteStore';
 
-export default function ServiceFormModal({ cotizacionId, onConfirm, onCancel }) {
+export default function ServiceFormModal({ onConfirm, onCancel }) {
   const [descripcion, setDescripcion] = useState("");
   const [unidad, setUnidad] = useState("Und");
   const [cantidad, setCantidad] = useState("1");

@@ -1,14 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuoteStore } from '../store/quoteStore';
 import { quoteApi } from '../api/quoteApi';
-import { ChevronDown, ChevronUp, Save, Download, Plus, Trash2, Bold, Palette } from 'lucide-react';
-
-// Importa todos los logos de bancos desde src/assets/banks/
-const bankLogos = import.meta.glob('../../../assets/banks/*.png', { eager: true, import: 'default' });
-const getBankLogo = (filename) => {
-  const key = Object.keys(bankLogos).find(k => k.endsWith(`/${filename}`));
-  return key ? bankLogos[key] : null;
-};
+import { fileUrl } from '../../../lib/api';
+import { notify } from '../../../lib/notify';
+import { ChevronDown, ChevronUp, Save, Download, Plus, Trash2, Bold, Palette, Upload, X } from 'lucide-react';
 
 // ─── Toggle Switch ────────────────────────────────────────────────────────────
 const ToggleSwitch = ({ checked, onChange }) => (
@@ -66,49 +61,79 @@ const RichTextEditor = ({ value, onChange, placeholder, minHeight = '40px' }) =>
   );
 };
 
-// ─── Bank Card ────────────────────────────────────────────────────────────────
-const BANK_FIELDS_FULL = ['Soles', 'CCI Soles', 'Dólares', 'CCI Dólares'];
-const BANK_FIELDS_DETRACCIONES = ['Detracciones'];
-
-const BankCard = ({ cuenta, onChange }) => {
-  const fields = cuenta.tipo === 'detracciones' ? BANK_FIELDS_DETRACCIONES : BANK_FIELDS_FULL;
-  const logoSrc = getBankLogo(cuenta.logo);
-  const updateField = (key, val) => onChange({ ...cuenta, datos: { ...cuenta.datos, [key]: val } });
+// ─── Bank Card (editable: nombre, logo y campos dinámicos) ────────────────────
+const BankCard = ({ cuenta, onChange, onRemove }) => {
+  const fileInputRef = useRef(null);
   const isVisible = cuenta.visible !== false;
-  const toggleVisibility = (val) => onChange({ ...cuenta, visible: val });
+  const logo = fileUrl(cuenta.logo);
+  const campos = cuenta.campos || [];
+
+  const setField = (patch) => onChange({ ...cuenta, ...patch });
+  const setCampo = (i, key, val) =>
+    setField({ campos: campos.map((c, idx) => (idx === i ? { ...c, [key]: val } : c)) });
+  const addCampo = () => setField({ campos: [...campos, { label: '', valor: '' }] });
+  const removeCampo = (i) => setField({ campos: campos.filter((_, idx) => idx !== i) });
+
+  const handleLogo = async (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    try {
+      const { url } = await quoteApi.uploadBankLogo(f);
+      setField({ logo: url });
+    } catch (err) {
+      notify(err?.response?.data?.detail || 'Error al subir el logo del banco.');
+    } finally {
+      e.target.value = '';
+    }
+  };
+
+  const inputBox = {
+    background: 'rgba(255,255,255,0.07)', border: '1px solid var(--border-color)',
+    borderRadius: '5px', padding: '5px 8px', color: 'inherit', fontSize: '0.85rem',
+  };
 
   return (
     <div style={{
       background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-color)',
-      borderRadius: '8px', padding: '1rem', flex: '1 1 300px', minWidth: '270px',
+      borderRadius: '8px', padding: '1rem', flex: '1 1 320px', minWidth: '290px',
       opacity: isVisible ? 1 : 0.5, transition: 'opacity 0.2s'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {logoSrc
-            ? <img src={logoSrc} alt={cuenta.banco} style={{ height: '28px', maxWidth: '100px', objectFit: 'contain' }} />
-            : <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{cuenta.banco}</span>
-          }
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{logoSrc ? cuenta.banco : ''}</span>
+      {/* Cabecera: logo + nombre + toggle + eliminar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+          <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" style={{ display: 'none' }} onChange={handleLogo} />
+          {logo ? (
+            <img src={logo} alt={cuenta.banco || 'logo'} onClick={() => fileInputRef.current?.click()}
+              title="Cambiar logo" style={{ height: '34px', maxWidth: '90px', objectFit: 'contain', cursor: 'pointer', flexShrink: 0 }} />
+          ) : (
+            <button type="button" onClick={() => fileInputRef.current?.click()} title="Insertar logo"
+              style={{ height: '34px', width: '90px', flexShrink: 0, border: '1px dashed var(--border-color)', borderRadius: '6px', background: 'none', color: 'var(--text-secondary)', fontSize: '0.62rem', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+              <Upload size={12} /> Insertar logo
+            </button>
+          )}
+          <input type="text" value={cuenta.banco || ''} onChange={(e) => setField({ banco: e.target.value })}
+            placeholder="Nombre del banco" style={{ ...inputBox, flex: 1, minWidth: 0, fontWeight: 'bold', fontSize: '0.9rem' }} />
         </div>
-        <ToggleSwitch checked={isVisible} onChange={toggleVisibility} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: '10px', flexShrink: 0 }}>
+          <ToggleSwitch checked={isVisible} onChange={(v) => setField({ visible: v })} />
+          <button type="button" onClick={onRemove} className="btn" style={{ padding: '4px', background: 'none', color: '#ff4d4f' }} title="Eliminar banco"><Trash2 size={16} /></button>
+        </div>
       </div>
+
+      {/* Campos dinámicos (label editable + valor) */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {fields.map(field => (
-          <div key={field} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <label style={{ width: '90px', textAlign: 'right', fontSize: '0.78rem', color: 'var(--text-secondary)', flexShrink: 0 }}>{field}:</label>
-            <input
-              type="text"
-              value={cuenta.datos?.[field] || ''}
-              onChange={(e) => updateField(field, e.target.value)}
-              placeholder="—"
-              style={{
-                flex: 1, background: 'rgba(255,255,255,0.07)', border: '1px solid var(--border-color)',
-                borderRadius: '5px', padding: '5px 10px', color: 'inherit', fontSize: '0.85rem',
-              }}
-            />
+        {campos.map((campo, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <input type="text" value={campo.label || ''} onChange={(e) => setCampo(i, 'label', e.target.value)}
+              placeholder="Etiqueta (ej. Soles S/)" style={{ ...inputBox, width: '42%', color: 'var(--text-secondary)', fontSize: '0.8rem' }} />
+            <input type="text" value={campo.valor || ''} onChange={(e) => setCampo(i, 'valor', e.target.value)}
+              placeholder="N° de cuenta" style={{ ...inputBox, flex: 1, minWidth: 0 }} />
+            <button type="button" onClick={() => removeCampo(i)} className="btn" style={{ padding: '4px', background: 'none', color: 'var(--text-secondary)' }} title="Quitar campo"><X size={14} /></button>
           </div>
         ))}
+        <button type="button" onClick={addCampo} className="btn btn-secondary" style={{ alignSelf: 'flex-start', padding: '4px 10px', fontSize: '0.78rem', display: 'flex', gap: '5px', alignItems: 'center' }}>
+          <Plus size={13} /> Agregar campo
+        </button>
       </div>
     </div>
   );
@@ -145,8 +170,8 @@ export default function QuoteConditions({ cotizacionId, readOnly = false }) {
       try {
         const updated = await quoteApi.updatePlantillas({ [field]: cotizacion[field] });
         setPlantillas(updated);
-        alert('Plantilla global actualizada.');
-      } catch { alert('Error al actualizar la plantilla.'); }
+        notify('Plantilla global actualizada.', 'success');
+      } catch { notify('No se pudo actualizar la plantilla. Revisa tu conexión.'); }
       finally { setLoadingTemplate(false); }
     }
   };
@@ -231,25 +256,39 @@ export default function QuoteConditions({ cotizacionId, readOnly = false }) {
   const renderBankEditor = () => {
     const cuentas = cotizacion.cuentas_bancarias || [];
     const updateCuenta = (idx, updated) => {
-      const newCuentas = [...cuentas];
-      newCuentas[idx] = updated;
-      handleUpdate('cuentas_bancarias', newCuentas);
+      const n = [...cuentas]; n[idx] = updated; handleUpdate('cuentas_bancarias', n);
     };
-
-    if (cuentas.length === 0) {
-      return (
-        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)', border: '2px dashed var(--border-color)', borderRadius: '8px' }}>
-          <p style={{ marginBottom: '1rem' }}>No hay cuentas bancarias configuradas.</p>
-          <p>Haz clic en <strong style={{ color: 'var(--accent)' }}>Cargar Plantilla</strong> para inicializar los 5 bancos por defecto.</p>
-        </div>
-      );
-    }
+    const removeCuenta = (idx) => {
+      if (window.confirm('¿Eliminar este banco?')) {
+        handleUpdate('cuentas_bancarias', cuentas.filter((_, i) => i !== idx));
+      }
+    };
+    const addCuenta = () => handleUpdate('cuentas_bancarias', [
+      ...cuentas,
+      {
+        id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()),
+        banco: '', logo: '', visible: true, campos: [{ label: '', valor: '' }],
+      },
+    ]);
 
     return (
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-        {cuentas.map((cuenta, idx) => (
-          <BankCard key={idx} cuenta={cuenta} onChange={(updated) => updateCuenta(idx, updated)} />
-        ))}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {cuentas.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-secondary)', border: '2px dashed var(--border-color)', borderRadius: '8px' }}>
+            No hay bancos. Usa <strong>Agregar banco</strong> para crear uno (nombre, logo y campos editables).
+          </div>
+        )}
+        {cuentas.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+            {cuentas.map((cuenta, idx) => (
+              <BankCard key={cuenta.id || idx} cuenta={cuenta}
+                onChange={(u) => updateCuenta(idx, u)} onRemove={() => removeCuenta(idx)} />
+            ))}
+          </div>
+        )}
+        <button type="button" onClick={addCuenta} className="btn btn-primary" style={{ alignSelf: 'flex-start', display: 'flex', gap: '6px', alignItems: 'center' }}>
+          <Plus size={16} /> Agregar banco
+        </button>
       </div>
     );
   };
@@ -303,7 +342,7 @@ export default function QuoteConditions({ cotizacionId, readOnly = false }) {
           {openSection === 'cuentas' && (
             <div style={{ padding: '1rem' }}>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-                Edita los números de cuenta. Usa <strong>Cargar Plantilla</strong> para aplicar la plantilla maestra, o <strong>Guardar Global</strong> para actualizarla.
+                Agrega bancos con su nombre, logo y campos (etiqueta y número). Usa <strong>Guardar Global</strong> para guardar estos bancos como plantilla, o <strong>Cargar Plantilla</strong> para traerlos a esta cotización.
               </p>
               {renderBankEditor()}
             </div>

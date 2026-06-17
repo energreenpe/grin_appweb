@@ -10,6 +10,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional
 
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.modules.quote.models import (
@@ -475,39 +476,84 @@ def get_clientes(db: Session, search: Optional[str] = None) -> list[DatosCliente
         q = q.filter(DatosCliente.nombre.ilike(s) | DatosCliente.documento.ilike(s))
     return q.limit(50).all()
 
-def create_cliente(db: Session, data: DatosClienteCreate) -> DatosCliente:
-    # Si existe, lo actualiza, si no, lo crea (upsert basado en el nombre)
-    cliente = db.query(DatosCliente).filter(DatosCliente.nombre == data.nombre).first()
+def _match_cliente(db: Session, nombre: str, documento: Optional[str]) -> Optional[DatosCliente]:
+    """Identifica un cliente por RUC/DNI (identificador fuerte) y, si no, por nombre.
+    Permite corregir el nombre (lo ancla el RUC) o corregir el RUC (lo ancla el nombre)
+    sin duplicar el registro."""
+    if documento:
+        c = db.query(DatosCliente).filter(DatosCliente.documento == documento).first()
+        if c:
+            return c
+    if nombre:
+        return db.query(DatosCliente).filter(DatosCliente.nombre == nombre).first()
+    return None
+
+
+def upsert_cliente(
+    db: Session, *, nombre: str, documento: Optional[str] = None,
+    direccion: Optional[str] = None, atencion: Optional[str] = None,
+    referencia: Optional[str] = None, correo: Optional[str] = None,
+    telefono: Optional[str] = None,
+) -> Optional[DatosCliente]:
+    """Crea o actualiza un cliente emparejando por RUC/DNI o nombre. Devuelve None
+    si no hay ni nombre ni documento. Puede lanzar IntegrityError (lo maneja el caller)."""
+    nombre = (nombre or "").strip()
+    documento = (documento or "").strip() or None   # vacío -> NULL
+    if not nombre and not documento:
+        return None
+
+    campos = dict(nombre=nombre, documento=documento, direccion=direccion,
+                  atencion=atencion, referencia=referencia, correo=correo, telefono=telefono)
+    cliente = _match_cliente(db, nombre, documento)
     if cliente:
-        for field, value in data.model_dump(exclude_unset=True).items():
+        for field, value in campos.items():
             setattr(cliente, field, value)
     else:
-        cliente = DatosCliente(**data.model_dump())
+        cliente = DatosCliente(**campos)
         db.add(cliente)
     db.commit()
     db.refresh(cliente)
     return cliente
 
+
+def create_cliente(db: Session, data: DatosClienteCreate) -> DatosCliente:
+    """Upsert de cliente desde la API. Mapea choques de unicidad a un error claro."""
+    try:
+        cliente = upsert_cliente(
+            db, nombre=data.nombre, documento=data.documento, direccion=data.direccion,
+            atencion=data.atencion, referencia=data.referencia, correo=data.correo,
+            telefono=data.telefono,
+        )
+    except IntegrityError:
+        db.rollback()
+        raise QuoteError("Ya existe otro cliente con ese nombre o RUC/DNI.", code=409)
+    if cliente is None:
+        raise QuoteError("Debe indicar al menos el nombre o el RUC/DNI del cliente.", code=400)
+    return cliente
+
+
+def upsert_cliente_from_cotizacion(db: Session, cot: Cotizacion) -> None:
+    """Guarda/actualiza el cliente al generar el PDF (cliente nuevo -> se crea;
+    existente -> se actualiza). Best-effort: nunca interrumpe la generación del PDF."""
+    try:
+        upsert_cliente(
+            db, nombre=cot.cliente_nombre, documento=cot.cliente_doc,
+            direccion=cot.cliente_dir, atencion=cot.cliente_atencion,
+            referencia=cot.cliente_referencia, correo=cot.cliente_correo,
+            telefono=cot.cliente_tel,
+        )
+    except Exception:
+        db.rollback()
+
 # ─── PLANTILLAS GLOBALES ─────────────────────────────────────────────────────
 
-# Estructura fija de los 5 bancos (sin números — el usuario los completa)
-_ESTRUCTURA_BANCOS = [
-    {"banco": "Interbank",         "logo": "Interbank.png", "tipo": "full",          "datos": {"Soles": "", "CCI Soles": "", "Dólares": "", "CCI Dólares": ""}},
-    {"banco": "Banco de la Nación","logo": "bn.png",        "tipo": "detracciones",  "datos": {"Detracciones": ""}},
-    {"banco": "BCP",               "logo": "bcp.png",       "tipo": "full",          "datos": {"Soles": "", "CCI Soles": "", "Dólares": "", "CCI Dólares": ""}},
-    {"banco": "BBVA",              "logo": "bbva.png",       "tipo": "full",          "datos": {"Soles": "", "CCI Soles": "", "Dólares": "", "CCI Dólares": ""}},
-    {"banco": "Scotiabank",        "logo": "sb.png",         "tipo": "full",          "datos": {"Soles": "", "CCI Soles": "", "Dólares": "", "CCI Dólares": ""}},
-]
-
-
 def get_plantillas_globales(db: Session) -> PlantillasGlobales:
-    """Obtiene la única fila de plantillas globales. Si no existe la crea vacía.
-    Si ya existe pero cuentas_bancarias está vacío, inicializa la estructura de bancos."""
+    """Obtiene la única fila de plantillas globales; si no existe la crea vacía.
+    Los bancos arrancan SIN cards ni logos por defecto: el usuario los agrega y
+    edita (nombre, logo y campos) desde la sección de Cuentas Bancarias."""
     plantillas = db.query(PlantillasGlobales).first()
-    needs_save = False
 
     if not plantillas:
-        # Primera vez en un sistema recién instalado
         plantillas = PlantillasGlobales(
             id=1,
             cond_tecnicas=[""],
@@ -515,16 +561,9 @@ def get_plantillas_globales(db: Session) -> PlantillasGlobales:
             cond_otras=[],
             cond_garantia=[],
             cond_garantia_servicio="",
-            cuentas_bancarias=_ESTRUCTURA_BANCOS,
+            cuentas_bancarias=[],
         )
         db.add(plantillas)
-        needs_save = True
-    elif not plantillas.cuentas_bancarias:
-        # El registro existe pero aún no tiene bancos (instalación previa)
-        plantillas.cuentas_bancarias = _ESTRUCTURA_BANCOS
-        needs_save = True
-
-    if needs_save:
         db.commit()
         db.refresh(plantillas)
 

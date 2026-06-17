@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { quoteApi } from '../api/quoteApi';
 import ProductFormModal from '../components/ProductFormModal';
+import { notify } from '../../../lib/notify';
 
 export default function ProductsManager() {
   const [products, setProducts] = useState([]);
@@ -11,21 +12,22 @@ export default function ProductsManager() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
 
-  useEffect(() => {
-    loadProducts();
-  }, []);
-
-  const loadProducts = async (query = '') => {
+  const loadProducts = useCallback(async (query = '') => {
     setLoading(true);
     try {
       const data = await quoteApi.getProducts(query);
       setProducts(data);
     } catch (err) {
       console.error(err);
+      notify('No se pudieron cargar los productos. Revisa tu conexión.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -49,7 +51,7 @@ export default function ProductsManager() {
       loadProducts(search);
     } catch (err) {
       console.error(err);
-      alert("Error al eliminar el producto");
+      notify(err?.response?.data?.detail || "No se pudo eliminar el producto.");
     }
   };
 
@@ -64,7 +66,7 @@ export default function ProductsManager() {
       loadProducts(search);
     } catch (err) {
       console.error(err);
-      alert("Error al guardar el producto");
+      notify(err?.response?.data?.detail || "No se pudo guardar el producto.");
     }
   };
 

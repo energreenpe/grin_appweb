@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuoteStore } from '../store/quoteStore';
 import { quoteApi } from '../api/quoteApi';
+import { notify } from '../../../lib/notify';
 
 export default function CompanyHeader({ readOnly = false }) {
   const { cotizacion, updateHeader } = useQuoteStore();
@@ -9,11 +10,7 @@ export default function CompanyHeader({ readOnly = false }) {
   const [showModal, setShowModal] = useState(false);
   const [editEmpresa, setEditEmpresa] = useState({});
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [empData, vendData] = await Promise.all([
         quoteApi.getEmpresa(),
@@ -23,8 +20,13 @@ export default function CompanyHeader({ readOnly = false }) {
       setVendedores(vendData);
     } catch (err) {
       console.error("Error cargando empresa/vendedores", err);
+      notify('No se pudieron cargar los datos de empresa.');
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   if (!cotizacion || !empresa) return null;
 
@@ -47,10 +49,10 @@ export default function CompanyHeader({ readOnly = false }) {
     if (file) {
       try {
         await quoteApi.uploadLogo(file);
-        alert("Logo subido correctamente.");
+        notify("Logo subido correctamente.", "success");
         loadData(); // reload empresa data
       } catch (err) {
-        alert("Error al subir el logo.");
+        notify(err?.response?.data?.detail || "Error al subir el logo.");
       }
     }
   };
@@ -66,7 +68,7 @@ export default function CompanyHeader({ readOnly = false }) {
       setShowModal(false);
       loadData();
     } catch (err) {
-      alert("Error al guardar los datos de empresa");
+      notify(err?.response?.data?.detail || "Error al guardar los datos de empresa.");
     }
   };
 

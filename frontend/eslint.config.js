@@ -17,5 +17,12 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+    rules: {
+      // Regla nueva (react-hooks v7 / React Compiler) que marca como error el
+      // patrón estándar de cargar datos en useEffect. La app usa ese patrón en
+      // todas las pantallas; la dejamos como advertencia hasta migrar el fetching
+      // a React Query (ya instalado). No oculta bugs reales, solo guía de estilo.
+      'react-hooks/set-state-in-effect': 'warn',
+    },
   },
 ])

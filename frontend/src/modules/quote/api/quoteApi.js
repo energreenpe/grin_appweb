@@ -3,7 +3,7 @@ import { api } from '../../../lib/api';
 export const quoteApi = {
   // Productos
   getProducts: async (search = '') => {
-    const res = await api.get('/quote/products', { params: { search } });
+    const res = await api.get('/quote/products', { params: { search, limit: 1000 } });
     return res.data;
   },
   createProduct: async (data) => {
@@ -106,6 +106,16 @@ export const quoteApi = {
     const formData = new FormData();
     formData.append('file', file);
     const res = await api.post('/quote/empresa/logo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return res.data;
+  },
+
+  // Sube el logo de un banco (se convierte a webp en el backend). Devuelve { url }.
+  uploadBankLogo: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await api.post('/quote/banks/logo', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
     return res.data;

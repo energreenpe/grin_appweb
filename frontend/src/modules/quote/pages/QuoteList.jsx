@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { quoteApi } from '../api/quoteApi';
+import { notify } from '../../../lib/notify';
 
 const ESTADO_COLORS = {
   borrador:  { bg: 'rgba(255,255,255,0.1)',  fg: 'var(--text-secondary)' },
@@ -18,20 +19,21 @@ export default function QuoteList() {
   const [estadoFilter, setEstadoFilter] = useState('todos');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadQuotes();
-  }, []);
-
-  const loadQuotes = async () => {
+  const loadQuotes = useCallback(async () => {
     try {
       const data = await quoteApi.getCotizaciones();
       setQuotes(data);
     } catch (err) {
       console.error(err);
+      notify('No se pudieron cargar las cotizaciones. Revisa tu conexión.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadQuotes();
+  }, [loadQuotes]);
 
   const handleCreate = async () => {
     try {
@@ -53,7 +55,7 @@ export default function QuoteList() {
       navigate(`/quote/${nueva.id}`);
     } catch (err) {
       console.error(err);
-      alert('No se pudo duplicar la cotización');
+      notify('No se pudo duplicar la cotización. Revisa tu conexión.');
     }
   };
 
@@ -64,7 +66,7 @@ export default function QuoteList() {
       await quoteApi.deleteCotizacion(id);
       loadQuotes();
     } catch (err) {
-      alert(err?.response?.data?.detail || 'No se pudo eliminar la cotización');
+      notify(err?.response?.data?.detail || 'No se pudo eliminar la cotización.');
     }
   };
 

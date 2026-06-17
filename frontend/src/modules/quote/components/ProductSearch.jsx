@@ -1,97 +1,120 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuoteStore } from '../store/quoteStore';
 import { quoteApi } from '../api/quoteApi';
+import { notify } from '../../../lib/notify';
 import ProductPartitionModal from './ProductPartitionModal';
+
+// Alto que deja ver ~5 filas a la vez; el resto se ve con scroll vertical.
+const TABLE_MAX_HEIGHT = '360px';
+const stickyTh = { position: 'sticky', top: 0, zIndex: 1 };
 
 export default function ProductSearch({ cotizacionId }) {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
-  const [searching, setSearching] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  
+
   const { addItem } = useQuoteStore();
 
-  const handleSearch = async (e) => {
-    const val = e.target.value;
-    setQuery(val);
-    if (val.length < 3) {
-      setResults([]);
-      return;
-    }
-    
-    setSearching(true);
+  // Carga productos: los primeros si no hay búsqueda, o las coincidencias si la hay.
+  const loadProducts = useCallback(async (q = '') => {
+    setLoading(true);
     try {
-      const data = await quoteApi.getProducts(val);
-      setResults(data);
+      const data = await quoteApi.getProducts(q);
+      setProducts(data);
     } catch (err) {
       console.error(err);
+      notify('No se pudieron cargar los productos. Revisa tu conexión.');
     } finally {
-      setSearching(false);
+      setLoading(false);
     }
-  };
+  }, []);
 
-  const handleSelect = (product) => {
-    setSelectedProduct(product);
-  };
+  // Carga inicial (primeros 5) y búsqueda con debounce (no consulta en cada tecla).
+  useEffect(() => {
+    const t = setTimeout(() => loadProducts(query.trim()), 300);
+    return () => clearTimeout(t);
+  }, [query, loadProducts]);
 
   const handleConfirmAdd = (particion, subparticion) => {
     addItem(cotizacionId, selectedProduct, 1, particion, subparticion);
-    setQuery('');
-    setResults([]);
     setSelectedProduct(null);
   };
 
   return (
-    <div style={{ position: 'relative' }}>
-      <input 
-        type="text" 
-        value={query}
-        onChange={handleSearch}
-        placeholder="Buscar producto por nombre, marca o categoría..."
-        className="input-field"
-        style={{ paddingLeft: '2rem' }}
-      />
-      <span style={{ position: 'absolute', left: '0.75rem', top: '0.5rem', color: 'var(--text-secondary)' }}>
-        🔍
-      </span>
+    <div>
+      {/* Barra de búsqueda */}
+      <div style={{ position: 'relative', marginBottom: '1rem' }}>
+        <span style={{ position: 'absolute', left: '0.75rem', top: '0.5rem', color: 'var(--text-secondary)' }}>
+          🔍
+        </span>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar producto por nombre, marca o categoría..."
+          className="input-field"
+          style={{ paddingLeft: '2rem' }}
+        />
+      </div>
 
-      {searching && <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Buscando...</div>}
-
-      {results.length > 0 && (
-        <div style={{ 
-          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
-          backgroundColor: 'var(--surface-color)', border: '1px solid var(--border-color)',
-          borderRadius: 'var(--radius)', marginTop: '0.25rem', maxHeight: '300px', overflowY: 'auto',
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
-        }}>
-          {results.map(p => (
-            <div 
-              key={p.id}
-              style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '0.75rem 1rem', borderBottom: '1px solid var(--border-color)'
-              }}
-            >
-              <div>
-                <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>{p.nombre}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                  {p.categoria} | {p.marca} | Precio Base: {p.moneda} {p.precio}
-                </div>
-              </div>
-              <button 
-                onClick={() => handleSelect(p)}
-                className="btn btn-secondary"
-                style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
-              >
-                + Seleccionar
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Tabla de productos: contiene todos, muestra ~5 con scroll vertical */}
+      <div className="table-container" style={{ maxHeight: TABLE_MAX_HEIGHT, overflowY: 'auto' }}>
+        <table>
+          <thead>
+            <tr>
+              <th style={stickyTh}>Producto</th>
+              <th style={{ ...stickyTh, width: '150px' }}>Categoría</th>
+              <th style={{ ...stickyTh, width: '120px' }}>Marca</th>
+              <th style={{ ...stickyTh, width: '130px' }}>Precio Base</th>
+              <th style={{ ...stickyTh, width: '100px' }}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan="5" style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-secondary)' }}>
+                  Cargando...
+                </td>
+              </tr>
+            ) : products.length === 0 ? (
+              <tr>
+                <td colSpan="5" style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-secondary)' }}>
+                  {query.trim() ? 'No se encontraron productos' : 'No hay productos registrados'}
+                </td>
+              </tr>
+            ) : (
+              products.map((p) => (
+                <tr key={p.id}>
+                  <td>
+                    <div style={{ fontWeight: 500 }}>{p.nombre}</div>
+                    {p.descripcion && (
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{p.descripcion}</div>
+                    )}
+                  </td>
+                  <td style={{ fontSize: '0.85rem' }}>{p.categoria}</td>
+                  <td style={{ fontSize: '0.85rem' }}>{p.marca}</td>
+                  <td style={{ fontSize: '0.85rem' }}>
+                    {p.moneda} {Number(p.precio).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    <button
+                      onClick={() => setSelectedProduct(p)}
+                      className="btn btn-secondary"
+                      style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem' }}
+                    >
+                      + Agregar
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {selectedProduct && (
-        <ProductPartitionModal 
+        <ProductPartitionModal
           product={selectedProduct}
           onConfirm={handleConfirmAdd}
           onCancel={() => setSelectedProduct(null)}

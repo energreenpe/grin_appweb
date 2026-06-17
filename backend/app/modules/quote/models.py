@@ -1,6 +1,6 @@
 from sqlalchemy import (
-    Boolean, Column, ForeignKey, Integer, Numeric,
-    String, Text, DateTime, JSON, UniqueConstraint
+    Boolean, Column, ForeignKey, Index, Integer, Numeric,
+    String, Text, DateTime, JSON, UniqueConstraint, text
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -156,10 +156,15 @@ class PlantillasGlobales(Base):
 
 class DatosCliente(Base):
     __tablename__ = "datos_cliente"
+    __table_args__ = (
+        # RUC/DNI único solo cuando tiene valor (los NULL no chocan entre sí)
+        Index("uq_datos_cliente_documento", "documento", unique=True,
+              postgresql_where=text("documento IS NOT NULL")),
+    )
 
     id          = Column(Integer, primary_key=True, index=True)
     nombre      = Column(String(255), nullable=False, unique=True, index=True)
-    documento   = Column(String(50), nullable=True) # RUC o DNI
+    documento   = Column(String(50), nullable=True) # RUC o DNI (único si tiene valor)
     direccion   = Column(Text, nullable=True)
     atencion    = Column(String(255), nullable=True)
     referencia  = Column(Text, nullable=True)

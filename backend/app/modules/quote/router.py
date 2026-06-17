@@ -2,11 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from typing import Optional
-import os
+import uuid
 
 from app.db import get_db
 from app.modules.quote import schemas, service
 from app.modules.quote.pdf import generar_pdf_cotizacion
+from app import storage
+from app.images import to_webp, ImageError, MAX_BYTES
 
 router = APIRouter()
 
@@ -166,7 +168,7 @@ def reorder_items(cotizacion_id: int, req: schemas.ReorderItemsReq, db: Session 
 
 @router.put(
     "/cotizaciones/{cotizacion_id}/items/{item_id}",
-    response_model=schemas.ItemOut,
+    response_model=schemas.CotizacionOut,
 )
 def update_item(
     cotizacion_id: int,
@@ -177,7 +179,13 @@ def update_item(
     item = service.update_item(db, cotizacion_id, item_id, data)
     if not item:
         raise HTTPException(status_code=404, detail="Ítem no encontrado")
-    return schemas.ItemOut.from_orm_item(item)
+    # Devuelve la cotización completa (con totales) para que el frontend no necesite
+    # una recarga aparte tras cada edición.
+    cot = service.get_cotizacion(db, cotizacion_id)
+    out = schemas.CotizacionOut.model_validate(cot)
+    out.totales = service.calcular_totales(cot.items, cot)
+    out.items = [schemas.ItemOut.from_orm_item(i) for i in cot.items]
+    return out
 
 
 @router.delete(
@@ -203,6 +211,10 @@ def download_pdf(cotizacion_id: int, db: Session = Depends(get_db)):
     # Al generar el PDF de un borrador, pasa a "enviada" y obtiene su número.
     if cot.estado == "borrador":
         cot = service.change_estado(db, cotizacion_id, "enviada")
+
+    # Guardar/actualizar el cliente recién ahora (cliente nuevo -> se crea;
+    # existente -> se actualiza por RUC/DNI o nombre). Best-effort.
+    service.upsert_cliente_from_cotizacion(db, cot)
 
     empresa = service.get_empresa(db)
     pdf_bytes = generar_pdf_cotizacion(cot, cot.items, empresa)
@@ -231,18 +243,36 @@ def update_empresa(data: schemas.EmpresaUpdate, db: Session = Depends(get_db)):
 
 @router.post("/empresa/logo")
 def upload_logo(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    """Sube un logo y actualiza el path en la empresa."""
-    upload_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "assets"))
-    os.makedirs(upload_dir, exist_ok=True)
-    
-    file_ext = os.path.splitext(file.filename)[1]
-    file_path = os.path.join(upload_dir, f"logo_empresa{file_ext}")
-    
-    with open(file_path, "wb") as buffer:
-        buffer.write(file.file.read())
-    
-    service.update_empresa(db, {"logo_path": file_path})
-    return {"status": "ok", "path": file_path}
+    """Sube el logo de la empresa: lo convierte a WEBP, lo guarda en uploads/ y
+    REEMPLAZA el anterior (lo borra). Guarda la ruta relativa en la BD."""
+    # Lectura acotada: nunca carga más de 2 MB en memoria (rechazo temprano).
+    raw = file.file.read(MAX_BYTES + 1)
+    try:
+        webp = to_webp(raw)
+    except ImageError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    empresa = service.get_empresa(db)
+    storage.delete(empresa.logo_path)          # reemplazo: borra el anterior
+    rel = storage.save_bytes(webp, "empresa", f"logo_{uuid.uuid4().hex}.webp")
+    service.update_empresa(db, {"logo_path": rel})
+    return {"status": "ok", "path": rel}
+
+
+@router.post("/banks/logo")
+def upload_bank_logo(file: UploadFile = File(...)):
+    """Sube el logo de un banco: lo convierte a WEBP, lo guarda en uploads/banks/
+    con nombre UUID y devuelve la URL relativa. No autoborra (los logos de banco
+    son snapshot por cotización; borrarlos rompería PDFs históricos)."""
+    # Lectura acotada: nunca carga más de 2 MB en memoria (rechazo temprano).
+    raw = file.file.read(MAX_BYTES + 1)
+    try:
+        webp = to_webp(raw)
+    except ImageError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    rel = storage.save_bytes(webp, "banks", f"{uuid.uuid4().hex}.webp")
+    return {"url": rel}
 
 
 # ═══════════════════════════════════════════════════════════════════
