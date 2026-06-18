@@ -22,7 +22,7 @@ const ESTADO_COLORS = {
 export default function QuoteEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { cotizacion, loadCotizacion, loading, error, addItem, changeEstado, flushPending } = useQuoteStore();
+  const { cotizacion, loadCotizacion, loading, error, addItem, changeEstado, flushPending, logoUploads } = useQuoteStore();
   const [showServiceModal, setShowServiceModal] = useState(false);
 
   useEffect(() => {
@@ -40,6 +40,10 @@ export default function QuoteEditor() {
 
   const handleDownloadPdf = async () => {
     if (!id || !cotizacion) return;
+    if (logoUploads > 0) {
+      notify('Espera a que termine de cargar el logo antes de generar el PDF.');
+      return;
+    }
     try {
       // Guardar lo último que se tecleó (debounce) antes de generar el PDF.
       await flushPending();
@@ -123,8 +127,11 @@ export default function QuoteEditor() {
           )}
 
           <button onClick={handleDuplicate} className="btn btn-secondary">⧉ Duplicar</button>
-          <button onClick={handleDownloadPdf} className="btn btn-primary" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <span>📄</span> Generar PDF
+          <button onClick={handleDownloadPdf} disabled={logoUploads > 0}
+            title={logoUploads > 0 ? 'Espera a que termine de cargar el logo' : 'Generar PDF'}
+            className="btn btn-primary"
+            style={{ display: 'flex', gap: '8px', alignItems: 'center', opacity: logoUploads > 0 ? 0.6 : 1 }}>
+            <span>📄</span> {logoUploads > 0 ? 'Cargando logo…' : 'Generar PDF'}
           </button>
         </div>
       </div>

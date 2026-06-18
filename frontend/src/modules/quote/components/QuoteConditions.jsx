@@ -64,11 +64,15 @@ const RichTextEditor = ({ value, onChange, placeholder, minHeight = '40px' }) =>
 // ─── Bank Card (editable: nombre, logo y campos dinámicos) ────────────────────
 const BankCard = ({ cuenta, onChange, onRemove }) => {
   const fileInputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const { beginLogoUpload, endLogoUpload } = useQuoteStore();
   const isVisible = cuenta.visible !== false;
   const logo = fileUrl(cuenta.logo);
   const campos = cuenta.campos || [];
 
-  const setField = (patch) => onChange({ ...cuenta, ...patch });
+  // Envía solo el PATCH; el padre lo aplica al banco por su id sobre el estado más
+  // reciente (evita pisar otros bancos cuando una subida async termina tarde).
+  const setField = (patch) => onChange(patch);
   const setCampo = (i, key, val) =>
     setField({ campos: campos.map((c, idx) => (idx === i ? { ...c, [key]: val } : c)) });
   const addCampo = () => setField({ campos: [...campos, { label: '', valor: '' }] });
@@ -76,16 +80,22 @@ const BankCard = ({ cuenta, onChange, onRemove }) => {
 
   const handleLogo = async (e) => {
     const f = e.target.files?.[0];
-    if (!f) return;
+    e.target.value = '';                // permite volver a elegir el mismo archivo
+    if (!f || uploading) return;        // ignora clics mientras ya está subiendo
+    setUploading(true);
+    beginLogoUpload();
     try {
       const { url } = await quoteApi.uploadBankLogo(f);
       setField({ logo: url });
     } catch (err) {
       notify(err?.response?.data?.detail || 'Error al subir el logo del banco.');
     } finally {
-      e.target.value = '';
+      setUploading(false);
+      endLogoUpload();
     }
   };
+
+  const openPicker = () => { if (!uploading) fileInputRef.current?.click(); };
 
   const inputBox = {
     background: 'rgba(255,255,255,0.07)', border: '1px solid var(--border-color)',
@@ -101,12 +111,16 @@ const BankCard = ({ cuenta, onChange, onRemove }) => {
       {/* Cabecera: logo + nombre + toggle + eliminar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
-          <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" style={{ display: 'none' }} onChange={handleLogo} />
-          {logo ? (
-            <img src={logo} alt={cuenta.banco || 'logo'} onClick={() => fileInputRef.current?.click()}
+          <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" style={{ display: 'none' }} onChange={handleLogo} disabled={uploading} />
+          {uploading ? (
+            <div style={{ height: '34px', width: '90px', flexShrink: 0, border: '1px dashed var(--border-color)', borderRadius: '6px', color: 'var(--text-secondary)', fontSize: '0.62rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px', cursor: 'wait' }}>
+              ⏳ Cargando…
+            </div>
+          ) : logo ? (
+            <img src={logo} alt={cuenta.banco || 'logo'} onClick={openPicker}
               title="Cambiar logo" style={{ height: '34px', maxWidth: '90px', objectFit: 'contain', cursor: 'pointer', flexShrink: 0 }} />
           ) : (
-            <button type="button" onClick={() => fileInputRef.current?.click()} title="Insertar logo"
+            <button type="button" onClick={openPicker} title="Insertar logo"
               style={{ height: '34px', width: '90px', flexShrink: 0, border: '1px dashed var(--border-color)', borderRadius: '6px', background: 'none', color: 'var(--text-secondary)', fontSize: '0.62rem', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
               <Upload size={12} /> Insertar logo
             </button>
@@ -141,7 +155,7 @@ const BankCard = ({ cuenta, onChange, onRemove }) => {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function QuoteConditions({ cotizacionId, readOnly = false }) {
-  const { cotizacion, updateHeader } = useQuoteStore();
+  const { cotizacion, updateHeader, logoUploads } = useQuoteStore();
   const [openSection, setOpenSection] = useState('tecnicas');
   const [plantillas, setPlantillas] = useState(null);
   const [loadingTemplate, setLoadingTemplate] = useState(false);
@@ -255,16 +269,19 @@ export default function QuoteConditions({ cotizacionId, readOnly = false }) {
   // ── Bank Accounts Editor ────────────────────────────────────────────────────
   const renderBankEditor = () => {
     const cuentas = cotizacion.cuentas_bancarias || [];
-    const updateCuenta = (idx, updated) => {
-      const n = [...cuentas]; n[idx] = updated; handleUpdate('cuentas_bancarias', n);
-    };
-    const removeCuenta = (idx) => {
+    // Lee SIEMPRE el array más reciente del store (no una foto capturada en render),
+    // así una subida async que termina tarde no pisa cambios hechos mientras tanto.
+    const latestCuentas = () => useQuoteStore.getState().cotizacion?.cuentas_bancarias || [];
+
+    const patchCuenta = (id, patch) =>
+      handleUpdate('cuentas_bancarias', latestCuentas().map(b => (b.id === id ? { ...b, ...patch } : b)));
+    const removeCuenta = (id) => {
       if (window.confirm('¿Eliminar este banco?')) {
-        handleUpdate('cuentas_bancarias', cuentas.filter((_, i) => i !== idx));
+        handleUpdate('cuentas_bancarias', latestCuentas().filter(b => b.id !== id));
       }
     };
     const addCuenta = () => handleUpdate('cuentas_bancarias', [
-      ...cuentas,
+      ...latestCuentas(),
       {
         id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()),
         banco: '', logo: '', visible: true, campos: [{ label: '', valor: '' }],
@@ -280,14 +297,17 @@ export default function QuoteConditions({ cotizacionId, readOnly = false }) {
         )}
         {cuentas.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-            {cuentas.map((cuenta, idx) => (
-              <BankCard key={cuenta.id || idx} cuenta={cuenta}
-                onChange={(u) => updateCuenta(idx, u)} onRemove={() => removeCuenta(idx)} />
+            {cuentas.map(cuenta => (
+              <BankCard key={cuenta.id} cuenta={cuenta}
+                onChange={(patch) => patchCuenta(cuenta.id, patch)} onRemove={() => removeCuenta(cuenta.id)} />
             ))}
           </div>
         )}
-        <button type="button" onClick={addCuenta} className="btn btn-primary" style={{ alignSelf: 'flex-start', display: 'flex', gap: '6px', alignItems: 'center' }}>
-          <Plus size={16} /> Agregar banco
+        <button type="button" onClick={addCuenta} disabled={logoUploads > 0}
+          className="btn btn-primary"
+          title={logoUploads > 0 ? 'Espera a que termine de cargar el logo' : 'Agregar banco'}
+          style={{ alignSelf: 'flex-start', display: 'flex', gap: '6px', alignItems: 'center', opacity: logoUploads > 0 ? 0.6 : 1 }}>
+          <Plus size={16} /> {logoUploads > 0 ? 'Cargando logo…' : 'Agregar banco'}
         </button>
       </div>
     );

@@ -13,6 +13,7 @@ from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app import storage
 from app.modules.quote.models import (
     Cotizacion, CorrelativoContador, EmpresaConfig, ItemCotizacion,
     Producto, Usuario, PlantillasGlobales
@@ -56,6 +57,53 @@ def _require_editable(cot: Cotizacion) -> None:
             f"La cotización está en estado '{cot.estado}' y es de solo lectura.",
             code=423,
         )
+
+
+# ─── LIMPIEZA DE LOGOS POR CONTEO DE REFERENCIAS ─────────────────────────────
+# Los logos de banco son "snapshot": una imagen puede estar referenciada por la
+# plantilla global Y/O por varias cotizaciones. Por eso una imagen solo se borra
+# del disco cuando YA NO la referencia nadie (así no se rompe "Cargar Plantilla").
+
+def gather_referenced_logos(db: Session) -> set[str]:
+    """Todas las rutas de logo referenciadas hoy en la BD: empresa + plantilla
+    global + todas las cotizaciones."""
+    refs: set[str] = set()
+
+    empresa = db.query(EmpresaConfig).first()
+    if empresa and empresa.logo_path:
+        refs.add(empresa.logo_path)
+
+    def add_banks(cuentas):
+        for b in (cuentas or []):
+            if b.get("logo"):
+                refs.add(b["logo"])
+
+    plantilla = db.query(PlantillasGlobales).first()
+    if plantilla:
+        add_banks(plantilla.cuentas_bancarias)
+    for cot in db.query(Cotizacion).all():
+        add_banks(cot.cuentas_bancarias)
+
+    return refs
+
+
+def _bank_logos(cuentas) -> set[str]:
+    """Logos presentes en una lista de cuentas bancarias."""
+    return {b.get("logo") for b in (cuentas or []) if b.get("logo")}
+
+
+def _delete_unreferenced_logos(db: Session, candidates: set[str]) -> None:
+    """Borra del disco los logos candidatos que ya no referencia NADIE.
+    Best-effort: nunca interrumpe el flujo principal."""
+    if not candidates:
+        return
+    try:
+        referenced = gather_referenced_logos(db)
+        for logo in candidates:
+            if logo and logo not in referenced and str(logo).startswith("uploads/"):
+                storage.delete(logo)
+    except Exception:
+        pass
 
 
 # ─── UTILIDADES FINANCIERAS ──────────────────────────────────────────────────
@@ -306,10 +354,20 @@ def update_cotizacion(
     _require_editable(cot)
     payload = data.model_dump(exclude_unset=True)
     payload.pop("estado", None)   # el estado solo cambia vía change_estado()
+
+    # Si cambian las cuentas bancarias, recordar los logos previos para limpiar
+    # luego los que queden huérfanos (banco eliminado, Cargar Plantilla, reemplazo).
+    old_bank_logos = _bank_logos(cot.cuentas_bancarias) if "cuentas_bancarias" in payload else None
+
     for field, value in payload.items():
         setattr(cot, field, value)
     db.commit()
     db.refresh(cot)
+
+    if old_bank_logos is not None:
+        removed = old_bank_logos - _bank_logos(cot.cuentas_bancarias)
+        _delete_unreferenced_logos(db, removed)
+
     return cot
 
 
@@ -325,8 +383,10 @@ def delete_cotizacion(db: Session, cotizacion_id: int) -> bool:
             "aprobadas o rechazadas se conservan como historial.",
             code=409,
         )
+    bank_logos = _bank_logos(cot.cuentas_bancarias)
     db.delete(cot)   # los ítems caen por el cascade
     db.commit()
+    _delete_unreferenced_logos(db, bank_logos)   # limpiar logos que queden huérfanos
     return True
 
 
@@ -465,71 +525,12 @@ def get_vendedores(db: Session) -> list[Usuario]:
 
 
 # ─── CLIENTES ────────────────────────────────────────────────────────────────
-
-from app.modules.quote.models import DatosCliente
-from app.modules.quote.schemas import DatosClienteCreate
-
-def get_clientes(db: Session, search: Optional[str] = None) -> list[DatosCliente]:
-    q = db.query(DatosCliente)
-    if search:
-        s = f"%{search.lower()}%"
-        q = q.filter(DatosCliente.nombre.ilike(s) | DatosCliente.documento.ilike(s))
-    return q.limit(50).all()
-
-def _match_cliente(db: Session, nombre: str, documento: Optional[str]) -> Optional[DatosCliente]:
-    """Identifica un cliente por RUC/DNI (identificador fuerte) y, si no, por nombre.
-    Permite corregir el nombre (lo ancla el RUC) o corregir el RUC (lo ancla el nombre)
-    sin duplicar el registro."""
-    if documento:
-        c = db.query(DatosCliente).filter(DatosCliente.documento == documento).first()
-        if c:
-            return c
-    if nombre:
-        return db.query(DatosCliente).filter(DatosCliente.nombre == nombre).first()
-    return None
-
-
-def upsert_cliente(
-    db: Session, *, nombre: str, documento: Optional[str] = None,
-    direccion: Optional[str] = None, atencion: Optional[str] = None,
-    referencia: Optional[str] = None, correo: Optional[str] = None,
-    telefono: Optional[str] = None,
-) -> Optional[DatosCliente]:
-    """Crea o actualiza un cliente emparejando por RUC/DNI o nombre. Devuelve None
-    si no hay ni nombre ni documento. Puede lanzar IntegrityError (lo maneja el caller)."""
-    nombre = (nombre or "").strip()
-    documento = (documento or "").strip() or None   # vacío -> NULL
-    if not nombre and not documento:
-        return None
-
-    campos = dict(nombre=nombre, documento=documento, direccion=direccion,
-                  atencion=atencion, referencia=referencia, correo=correo, telefono=telefono)
-    cliente = _match_cliente(db, nombre, documento)
-    if cliente:
-        for field, value in campos.items():
-            setattr(cliente, field, value)
-    else:
-        cliente = DatosCliente(**campos)
-        db.add(cliente)
-    db.commit()
-    db.refresh(cliente)
-    return cliente
-
-
-def create_cliente(db: Session, data: DatosClienteCreate) -> DatosCliente:
-    """Upsert de cliente desde la API. Mapea choques de unicidad a un error claro."""
-    try:
-        cliente = upsert_cliente(
-            db, nombre=data.nombre, documento=data.documento, direccion=data.direccion,
-            atencion=data.atencion, referencia=data.referencia, correo=data.correo,
-            telefono=data.telefono,
-        )
-    except IntegrityError:
-        db.rollback()
-        raise QuoteError("Ya existe otro cliente con ese nombre o RUC/DNI.", code=409)
-    if cliente is None:
-        raise QuoteError("Debe indicar al menos el nombre o el RUC/DNI del cliente.", code=400)
-    return cliente
+# La lógica de clientes (búsqueda + upsert con deduplicación por RUC/DNI o nombre)
+# vive en el módulo shared. Se re-exporta aquí para que el resto de quote la siga
+# usando igual (p. ej. upsert_cliente_from_cotizacion y el router).
+from app.modules.shared.service import (  # noqa: F401
+    get_clientes, upsert_cliente, create_cliente,
+)
 
 
 def upsert_cliente_from_cotizacion(db: Session, cot: Cotizacion) -> None:
@@ -572,9 +573,17 @@ def get_plantillas_globales(db: Session) -> PlantillasGlobales:
 
 def update_plantillas_globales(db: Session, data: PlantillasGlobalesUpdate) -> PlantillasGlobales:
     plantillas = get_plantillas_globales(db)
-    for field, value in data.model_dump(exclude_unset=True).items():
+    payload = data.model_dump(exclude_unset=True)
+    old_bank_logos = _bank_logos(plantillas.cuentas_bancarias) if "cuentas_bancarias" in payload else None
+
+    for field, value in payload.items():
         setattr(plantillas, field, value)
     db.commit()
     db.refresh(plantillas)
+
+    if old_bank_logos is not None:
+        removed = old_bank_logos - _bank_logos(plantillas.cuentas_bancarias)
+        _delete_unreferenced_logos(db, removed)
+
     return plantillas
 

@@ -9,8 +9,13 @@ from app.modules.quote import schemas, service
 from app.modules.quote.pdf import generar_pdf_cotizacion
 from app import storage
 from app.images import to_webp, ImageError, MAX_BYTES
+from app.ratelimit import RateLimiter
 
 router = APIRouter()
+
+# Límites anti-abuso (por IP). Compartido entre las dos rutas de logo = 10 subidas/min.
+upload_limiter = RateLimiter(max_requests=10, window_seconds=60)
+pdf_limiter = RateLimiter(max_requests=10, window_seconds=60)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -200,7 +205,7 @@ def delete_item(cotizacion_id: int, item_id: int, db: Session = Depends(get_db))
 
 # ── PDF ───────────────────────────────────────────────────────────────────────
 
-@router.get("/cotizaciones/{cotizacion_id}/pdf")
+@router.get("/cotizaciones/{cotizacion_id}/pdf", dependencies=[Depends(pdf_limiter)])
 def download_pdf(cotizacion_id: int, db: Session = Depends(get_db)):
     """Genera y descarga el PDF. Si está en borrador, lo marca como Enviada
     (asignando su correlativo) automáticamente antes de generar."""
@@ -241,7 +246,7 @@ def update_empresa(data: schemas.EmpresaUpdate, db: Session = Depends(get_db)):
     return service.update_empresa(db, data.model_dump(exclude_unset=True))
 
 
-@router.post("/empresa/logo")
+@router.post("/empresa/logo", dependencies=[Depends(upload_limiter)])
 def upload_logo(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """Sube el logo de la empresa: lo convierte a WEBP, lo guarda en uploads/ y
     REEMPLAZA el anterior (lo borra). Guarda la ruta relativa en la BD."""
@@ -254,12 +259,12 @@ def upload_logo(file: UploadFile = File(...), db: Session = Depends(get_db)):
 
     empresa = service.get_empresa(db)
     storage.delete(empresa.logo_path)          # reemplazo: borra el anterior
-    rel = storage.save_bytes(webp, "empresa", f"logo_{uuid.uuid4().hex}.webp")
+    rel = storage.save_bytes(webp, "quote/empresa", f"logo_{uuid.uuid4().hex}.webp")
     service.update_empresa(db, {"logo_path": rel})
     return {"status": "ok", "path": rel}
 
 
-@router.post("/banks/logo")
+@router.post("/banks/logo", dependencies=[Depends(upload_limiter)])
 def upload_bank_logo(file: UploadFile = File(...)):
     """Sube el logo de un banco: lo convierte a WEBP, lo guarda en uploads/banks/
     con nombre UUID y devuelve la URL relativa. No autoborra (los logos de banco
@@ -271,7 +276,7 @@ def upload_bank_logo(file: UploadFile = File(...)):
     except ImageError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    rel = storage.save_bytes(webp, "banks", f"{uuid.uuid4().hex}.webp")
+    rel = storage.save_bytes(webp, "quote/banks", f"{uuid.uuid4().hex}.webp")
     return {"url": rel}
 
 

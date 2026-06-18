@@ -16,6 +16,7 @@ from PIL import Image
 Image.MAX_IMAGE_PIXELS = 40_000_000
 
 MAX_BYTES = 2 * 1024 * 1024          # 2 MB
+MAX_DIMENSION = 1000                  # lado mayor (px): un logo no necesita más
 _ALLOWED_FORMATS = {"PNG", "JPEG", "WEBP", "MPO"}   # MPO = algunas fotos JPEG
 
 
@@ -41,8 +42,17 @@ def to_webp(raw: bytes) -> bytes:
     if img.format not in _ALLOWED_FORMATS:
         raise ImageError("Formato no permitido. Usa PNG, JPG o WEBP.")
 
-    # 3) Normalizar el modo (conservar transparencia si la hay) y reencodar.
+    # 3) Normalizar el modo (conservar transparencia si la hay).
     img = img.convert("RGBA" if img.mode in ("RGBA", "LA", "P") else "RGB")
+
+    # 4) Reducir la resolución si es grande. El tiempo de encodeo WEBP escala con
+    #    los píxeles, no con los KB: bajar un logo de 4K a <=1000px lo acelera de
+    #    ~20s a <1s, sin pérdida visible (se muestra pequeño y en el PDF también).
+    #    thumbnail() solo achica (nunca agranda) y conserva la proporción.
+    img.thumbnail((MAX_DIMENSION, MAX_DIMENSION), Image.Resampling.LANCZOS)
+
+    # 5) Encodear a WEBP. method=4 (en vez de 6) acelera bastante con calidad casi
+    #    idéntica para un logo.
     out = BytesIO()
-    img.save(out, "WEBP", quality=85, method=6)
+    img.save(out, "WEBP", quality=85, method=4)
     return out.getvalue()

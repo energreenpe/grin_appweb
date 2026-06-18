@@ -31,6 +31,12 @@ export const useQuoteStore = create((set, get) => ({
   loading: false,
   error: null,
 
+  // Subidas de logo en curso (bancos + empresa). Mientras sea > 0 se bloquea el PDF
+  // para que no salga con el logo anterior.
+  logoUploads: 0,
+  beginLogoUpload: () => set(s => ({ logoUploads: s.logoUploads + 1 })),
+  endLogoUpload: () => set(s => ({ logoUploads: Math.max(0, s.logoUploads - 1) })),
+
   loadCotizacion: async (id) => {
     set({ loading: true, error: null });
     try {

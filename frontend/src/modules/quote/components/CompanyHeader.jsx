@@ -4,11 +4,12 @@ import { quoteApi } from '../api/quoteApi';
 import { notify } from '../../../lib/notify';
 
 export default function CompanyHeader({ readOnly = false }) {
-  const { cotizacion, updateHeader } = useQuoteStore();
+  const { cotizacion, updateHeader, beginLogoUpload, endLogoUpload } = useQuoteStore();
   const [empresa, setEmpresa] = useState(null);
   const [vendedores, setVendedores] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editEmpresa, setEditEmpresa] = useState({});
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -46,14 +47,19 @@ export default function CompanyHeader({ readOnly = false }) {
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      try {
-        await quoteApi.uploadLogo(file);
-        notify("Logo subido correctamente.", "success");
-        loadData(); // reload empresa data
-      } catch (err) {
-        notify(err?.response?.data?.detail || "Error al subir el logo.");
-      }
+    e.target.value = '';                 // permite volver a elegir el mismo archivo
+    if (!file || uploadingLogo) return;  // ignora clics mientras ya está subiendo
+    setUploadingLogo(true);
+    beginLogoUpload();
+    try {
+      await quoteApi.uploadLogo(file);
+      notify("Logo subido correctamente.", "success");
+      loadData(); // reload empresa data
+    } catch (err) {
+      notify(err?.response?.data?.detail || "Error al subir el logo.");
+    } finally {
+      setUploadingLogo(false);
+      endLogoUpload();
     }
   };
 
@@ -80,9 +86,14 @@ export default function CompanyHeader({ readOnly = false }) {
           <button onClick={openModal} className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}>
             Cambiar Datos
           </button>
-          <label className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>
-            Cambiar Logo
-            <input type="file" style={{ display: 'none' }} accept="image/*" onChange={handleFileChange} />
+          <label className="btn btn-secondary" style={{
+            fontSize: '0.8rem', padding: '0.25rem 0.5rem',
+            cursor: uploadingLogo ? 'wait' : 'pointer',
+            opacity: uploadingLogo ? 0.6 : 1,
+            pointerEvents: uploadingLogo ? 'none' : 'auto',
+          }}>
+            {uploadingLogo ? '⏳ Cargando…' : 'Cambiar Logo'}
+            <input type="file" style={{ display: 'none' }} accept="image/*" onChange={handleFileChange} disabled={uploadingLogo} />
           </label>
         </div>
       </div>
