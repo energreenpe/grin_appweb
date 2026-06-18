@@ -62,7 +62,7 @@ export default function InspectorList() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Tipo Cliente:</label>
           <select 
-            className="form-control" 
+            className="input-field" 
             style={{ width: 'auto', minWidth: '150px' }}
             value={filtroTipo}
             onChange={(e) => setFiltroTipo(e.target.value)}
@@ -76,7 +76,7 @@ export default function InspectorList() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Sistema:</label>
           <select 
-            className="form-control" 
+            className="input-field" 
             style={{ width: 'auto', minWidth: '180px' }}
             value={filtroSistema}
             onChange={(e) => setFiltroSistema(e.target.value)}
@@ -93,7 +93,7 @@ export default function InspectorList() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Estado:</label>
           <select 
-            className="form-control" 
+            className="input-field" 
             style={{ width: 'auto', minWidth: '150px' }}
             value={filtroEstado}
             onChange={(e) => setFiltroEstado(e.target.value)}

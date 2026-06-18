@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { STEP_ORDER } from '../wizardSteps';
 
 const initialData = {
   tipo_cliente: null,
@@ -21,11 +22,8 @@ const initialData = {
   notas: ''
 };
 
-// Pasos válidos del wizard (exportado para validación en WizardPage)
-export const VALID_STEPS = [
-  'inicio', 'tipo_sistema', 'conexion_red', 'recibo_luz',
-  'cargas_criticas', 'tipo_techo', 'fotos_techo', 'fotos_interior', 'done'
-];
+// Pasos válidos del wizard: derivados de la fuente única (wizardSteps).
+export const VALID_STEPS = STEP_ORDER;
 
 export const useWizardStore = create(
   persist(
@@ -53,6 +51,12 @@ export const useWizardStore = create(
           currentStep: prev || 'inicio',
           stepHistory: history
         };
+      }),
+
+      // Reanudar un borrador en un paso concreto con su historial reconstruido.
+      resumeAt: (step, history = []) => set({
+        currentStep: step,
+        stepHistory: history
       }),
 
       reset: () => set({

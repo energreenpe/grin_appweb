@@ -4,6 +4,14 @@ from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, field_validator
 
+# Schemas de entidades transversales: definidos en shared, re-exportados aquí por
+# compatibilidad con el código de quote que los referencia como schemas.<X>.
+from app.modules.shared.schemas import (  # noqa: F401
+    UsuarioBase, UsuarioCreate, UsuarioOut,
+    DatosClienteBase, DatosClienteCreate, DatosClienteOut,
+    EmpresaBase, EmpresaUpdate, EmpresaOut,
+)
+
 
 # ─── PRODUCTO ─────────────────────────────────────────────────────────────────
 
@@ -245,28 +253,6 @@ class EstadoUpdate(BaseModel):
     estado: str
 
 
-# ─── EMPRESA ──────────────────────────────────────────────────────────────────
-
-class EmpresaBase(BaseModel):
-    nombre:    str = "Energreen Perú E.I.R.L."
-    ruc:       Optional[str] = "20604756821"
-    direccion: Optional[str] = None
-    telefono:  Optional[str] = None
-    email:     Optional[str] = None
-    logo_path: Optional[str] = None
-
-
-class EmpresaUpdate(EmpresaBase):
-    nombre: Optional[str] = None
-
-
-class EmpresaOut(EmpresaBase):
-    model_config = ConfigDict(from_attributes=True)
-
-    id:         int
-    updated_at: datetime
-
-
 # ─── PLANTILLAS GLOBALES ──────────────────────────────────────────────────────
 
 class PlantillasGlobalesBase(BaseModel):
@@ -289,43 +275,5 @@ class PlantillasGlobalesOut(PlantillasGlobalesBase):
     updated_at: datetime
 
 
-# ─── USUARIO ──────────────────────────────────────────────────────────────────
-
-class UsuarioBase(BaseModel):
-    nombre:   str
-    correo:   str
-    telefono: Optional[str] = None
-    rol:      Optional[str] = "vendedor"
-
-
-class UsuarioCreate(UsuarioBase):
-    pass
-
-
-class UsuarioOut(UsuarioBase):
-    model_config = ConfigDict(from_attributes=True)
-
-    id:         int
-    activo:     bool
-    created_at: datetime
-
-
-# ─── CLIENTE ──────────────────────────────────────────────────────────────────
-
-class DatosClienteBase(BaseModel):
-    nombre:      str
-    documento:   Optional[str] = None
-    direccion:   Optional[str] = None
-    atencion:    Optional[str] = None
-    referencia:  Optional[str] = None
-    correo:      Optional[str] = None
-    telefono:    Optional[str] = None
-
-class DatosClienteCreate(DatosClienteBase):
-    pass
-
-class DatosClienteOut(DatosClienteBase):
-    model_config = ConfigDict(from_attributes=True)
-
-    id:         int
-    created_at: datetime
+# Los schemas de Usuario y Cliente viven en app.modules.shared.schemas
+# (re-exportados al inicio de este archivo).

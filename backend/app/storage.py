@@ -17,6 +17,9 @@ import os
 _BACKEND_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _UPLOADS_ROOT = os.path.join(_BACKEND_ROOT, "uploads")
 
+# Raíz absoluta de uploads (para jobs de mantenimiento que necesitan escanear disco).
+UPLOADS_DIR = _UPLOADS_ROOT
+
 
 def _safe_full_path(rel_path: str) -> str:
     """Resuelve una ruta relativa a absoluta garantizando que quede DENTRO de

@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
 import { useWizardStore } from '../../store/wizardStore';
 import { inspectorApi } from '../../api/inspectorApi';
+import { notify } from '../../../../lib/notify';
+import { fileUrl } from '../../../../lib/api';
+import { toWebpFile, MAX_INPUT_BYTES } from '../../lib/imageTools';
+import CameraCapture from '../CameraCapture';
 
-const BASE_URL = import.meta.env.VITE_API_URL
-  ? import.meta.env.VITE_API_URL.replace('/api', '')
-  : 'http://localhost:8000';
+const MAX_FOTOS = 6;
 
 export default function StepCapturaFotos({ seccion, onNext }) {
   const { data, setData, visitaId } = useWizardStore();
   const [loading, setLoading] = useState(false);
   const [deletingIdx, setDeletingIdx] = useState(null);
+  const [showCamera, setShowCamera] = useState(false);
 
   const keyFotos = seccion === 'techo' ? 'fotos_techo' : 'fotos_interior';
   const fotos = data[keyFotos] || [];
+  const atLimit = fotos.length >= MAX_FOTOS;
 
   const title = seccion === 'techo'
     ? 'Fotos del Techo / Área Solar'
@@ -34,10 +38,34 @@ export default function StepCapturaFotos({ seccion, onNext }) {
       setData({ [keyFotos]: updatedVisita[keyFotos] });
     } catch (error) {
       console.error('Error subiendo foto', error);
-      alert('Hubo un error subiendo la foto');
+      notify('No se pudo subir la foto. Revisa tu conexión.');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Galería/archivo: comprimir a WebP en el cliente antes de subir.
+  const handleFilePick = async (file) => {
+    if (!file) return;
+    if (file.size > MAX_INPUT_BYTES) {
+      notify(`La imagen es demasiado grande (máx ${MAX_INPUT_BYTES / (1024 * 1024)} MB). Elige una foto más liviana.`);
+      return;
+    }
+    setLoading(true);
+    try {
+      const webp = await toWebpFile(file);
+      await uploadFoto(webp);
+    } catch (e) {
+      console.error('procesando imagen', e);
+      notify('No se pudo procesar la imagen.');
+      setLoading(false);
+    }
+  };
+
+  // Cámara: ya devuelve un File .webp listo para subir.
+  const handleCameraCapture = async (file) => {
+    setShowCamera(false);
+    await uploadFoto(file);
   };
 
   const handleDelete = async (index) => {
@@ -53,7 +81,7 @@ export default function StepCapturaFotos({ seccion, onNext }) {
       setData({ [keyFotos]: updatedVisita[keyFotos] });
     } catch (error) {
       console.error('Error eliminando foto', error);
-      alert('Hubo un error eliminando la foto');
+      notify('No se pudo eliminar la foto. Revisa tu conexión.');
     } finally {
       setDeletingIdx(null);
     }
@@ -83,6 +111,10 @@ export default function StepCapturaFotos({ seccion, onNext }) {
 
   return (
     <div>
+      {showCamera && (
+        <CameraCapture onCapture={handleCameraCapture} onClose={() => setShowCamera(false)} />
+      )}
+
       {/* Encabezado */}
       <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
         <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '0.3rem' }}>{title}</h2>
@@ -92,7 +124,7 @@ export default function StepCapturaFotos({ seccion, onNext }) {
           background: 'rgba(98,185,137,0.15)', color: 'var(--primary-color, #62B989)',
           borderRadius: '20px', padding: '2px 12px', fontSize: '0.8rem', fontWeight: 600,
         }}>
-          {fotos.length} foto{fotos.length !== 1 ? 's' : ''} subida{fotos.length !== 1 ? 's' : ''}
+          {fotos.length} / {MAX_FOTOS} fotos
         </span>
       </div>
 
@@ -119,7 +151,7 @@ export default function StepCapturaFotos({ seccion, onNext }) {
             }}
           >
             <img
-              src={`${BASE_URL}${foto.url}`}
+              src={fileUrl(foto.url)}
               alt={`Foto ${idx + 1}`}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
@@ -161,35 +193,44 @@ export default function StepCapturaFotos({ seccion, onNext }) {
           </div>
         ))}
 
-        {/* Botón: Tomar Foto con cámara */}
-        <label style={addBtnLabel} title="Abre la cámara del dispositivo">
-          <span style={{ fontSize: '1.8rem', lineHeight: 1 }}>📷</span>
-          <span>{loading ? 'Subiendo...' : 'Tomar\nFoto'}</span>
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            style={{ display: 'none' }}
-            disabled={loading}
-            onChange={(e) => { uploadFoto(e.target.files[0]); e.target.value = null; }}
-          />
-        </label>
+        {/* Botones de agregar: ocultos al alcanzar el máximo */}
+        {!atLimit && (
+          <>
+            {/* Botón: Tomar Foto con la cámara (getUserMedia) */}
+            <button
+              type="button"
+              style={{ ...addBtnLabel, padding: 0, font: 'inherit' }}
+              disabled={loading}
+              onClick={() => setShowCamera(true)}
+              title="Abre la cámara del dispositivo"
+            >
+              <span style={{ fontSize: '1.8rem', lineHeight: 1 }}>📷</span>
+              <span>{loading ? 'Subiendo…' : 'Tomar Foto'}</span>
+            </button>
 
-        {/* Botón: Subir desde galería */}
-        <label
-          style={{ ...addBtnLabel, border: '2px dashed var(--border-color)', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.03)' }}
-          title="Selecciona una imagen de tu galería o archivos"
-        >
-          <span style={{ fontSize: '1.8rem', lineHeight: 1 }}>📁</span>
-          <span>Subir{'\n'}Foto</span>
-          <input
-            type="file"
-            accept="image/*"
-            style={{ display: 'none' }}
-            disabled={loading}
-            onChange={(e) => { uploadFoto(e.target.files[0]); e.target.value = null; }}
-          />
-        </label>
+            {/* Botón: Subir desde galería/archivo (se comprime a WebP) */}
+            <label
+              style={{ ...addBtnLabel, border: '2px dashed var(--border-color)', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.03)' }}
+              title="Selecciona una imagen de tu galería o archivos"
+            >
+              <span style={{ fontSize: '1.8rem', lineHeight: 1 }}>📁</span>
+              <span>Subir Foto</span>
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                disabled={loading}
+                onChange={(e) => { handleFilePick(e.target.files[0]); e.target.value = null; }}
+              />
+            </label>
+          </>
+        )}
+
+        {atLimit && (
+          <div style={{ width: '100%', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+            Máximo de {MAX_FOTOS} fotos alcanzado. Elimina alguna para agregar otra.
+          </div>
+        )}
       </div>
 
       {/* Nota informativa */}

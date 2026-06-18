@@ -10,6 +10,7 @@ from app.db import Base
 from app.config import get_settings
 
 # Importar todos los modelos para que Alembic los detecte
+from app.modules.shared import models as shared_models  # noqa: F401
 from app.modules.quote import models  # noqa: F401
 from app.modules.inspector import models  # noqa: F401
 

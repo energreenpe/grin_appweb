@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { inspectorApi } from '../api/inspectorApi';
 import { useWizardStore } from '../store/wizardStore';
+import { buildHistory } from '../wizardSteps';
+import { notify } from '../../../lib/notify';
 
 export default function VisitaCard({ visita }) {
-  const { id, cliente, tipo_sistema, tipo_cliente, fecha, estado, paso_actual } = visita;
+  const { id, cliente, tipo_sistema, tipo_cliente, fecha, estado } = visita;
   const dateObj = new Date(fecha);
   const navigate = useNavigate();
-  const { setVisitaId, setData, goToStep } = useWizardStore();
+  const { setVisitaId, setData, resumeAt } = useWizardStore();
   const [loadingResume, setLoadingResume] = useState(false);
 
   const handleDownloadPDF = async () => {
@@ -15,7 +17,7 @@ export default function VisitaCard({ visita }) {
       await inspectorApi.downloadPdf(id, `Visita_${id}_${cliente.nombre.replace(/ /g, '_')}.pdf`);
     } catch (err) {
       console.error("Error descargando PDF", err);
-      alert("Hubo un error al descargar el PDF.");
+      notify("No se pudo descargar el PDF. Revisa tu conexión.");
     }
   };
 
@@ -23,16 +25,23 @@ export default function VisitaCard({ visita }) {
     try {
       setLoadingResume(true);
       const fullVisita = await inspectorApi.getVisita(id);
-      
-      // Rehidratar el store
+
+      // Rehidratar el store mapeando el shape de la API (cliente/tecnico) al del
+      // store (cliente_info/tecnico_info), que es lo que consume la UI del wizard.
+      const mapped = {
+        ...fullVisita,
+        cliente_info: fullVisita.cliente || null,
+        tecnico_info: fullVisita.tecnico || null,
+      };
       setVisitaId(fullVisita.id);
-      setData(fullVisita);
-      goToStep(fullVisita.paso_actual || 'inicio');
+      setData(mapped);
+      const target = fullVisita.paso_actual || 'inicio';
+      resumeAt(target, buildHistory(target, mapped));
       
       navigate('/inspector/new');
     } catch (err) {
       console.error("Error reanudando visita", err);
-      alert("Hubo un error al reanudar la inspección.");
+      notify("No se pudo reanudar la inspección. Revisa tu conexión.");
     } finally {
       setLoadingResume(false);
     }

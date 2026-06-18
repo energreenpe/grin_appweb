@@ -1,8 +1,11 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 from app.config import get_settings
+from app.db import get_db
 from app.modules.quote.router import router as quote_router
 from app.modules.quote.service import QuoteError
 from app.modules.inspector.router import router as inspector_router
@@ -47,5 +50,13 @@ def root():
 
 
 @app.get("/health", tags=["Health"])
-def health():
-    return {"status": "healthy"}
+def health(db: Session = Depends(get_db)):
+    """Verifica que el backend Y la base de datos estén operativos."""
+    try:
+        db.execute(text("SELECT 1"))
+    except Exception:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unhealthy", "database": "down"},
+        )
+    return {"status": "healthy", "database": "ok"}

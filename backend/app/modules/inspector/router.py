@@ -1,3 +1,4 @@
+import os
 from typing import List, Optional
 from fastapi import APIRouter, Depends, UploadFile, File
 from fastapi.responses import Response
@@ -6,9 +7,9 @@ from sqlalchemy import or_
 from app.db import get_db
 from app.modules.inspector import schemas, service
 from app.modules.inspector.pdf import generar_pdf_visita
-from app.modules.quote.models import DatosCliente, EmpresaConfig, Usuario
-from app.modules.quote.schemas import DatosClienteOut, DatosClienteCreate, UsuarioOut
-from app.modules.quote.service import create_cliente
+from app.modules.shared.models import DatosCliente, EmpresaConfig, Usuario
+from app.modules.shared.schemas import DatosClienteOut, DatosClienteCreate, UsuarioOut
+from app.modules.shared.service import create_cliente
 
 router = APIRouter()
 
@@ -45,11 +46,13 @@ def cancelar_visita(visita_id: int, db: Session = Depends(get_db)):
 
 @router.post("/visitas/{visita_id}/fotos-techo", response_model=schemas.VisitaOut)
 async def upload_foto_techo(visita_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    service.verificar_limite_fotos(db, visita_id, "techo")
     foto = await service.guardar_archivo(file, "fotos")
     return service.actualizar_fotos(db, visita_id, foto, "techo")
 
 @router.post("/visitas/{visita_id}/fotos-interior", response_model=schemas.VisitaOut)
 async def upload_foto_interior(visita_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    service.verificar_limite_fotos(db, visita_id, "interior")
     foto = await service.guardar_archivo(file, "fotos")
     return service.actualizar_fotos(db, visita_id, foto, "interior")
 
@@ -87,8 +90,20 @@ def crear_nuevo_cliente(cliente: DatosClienteCreate, db: Session = Depends(get_d
 @router.get("/visitas/{visita_id}/pdf")
 def descargar_pdf(visita_id: int, db: Session = Depends(get_db)):
     visita = service.obtener_visita(db, visita_id)
+
+    # Servir el PDF ya almacenado al completar la visita; si no existe, generarlo al vuelo
+    if visita.pdf_url:
+        stored = visita.pdf_url.lstrip("/")
+        if os.path.exists(stored):
+            with open(stored, "rb") as f:
+                pdf_bytes = f.read()
+            return Response(
+                content=pdf_bytes,
+                media_type="application/pdf",
+                headers={"Content-Disposition": f'attachment; filename="Visita_{visita_id}.pdf"'}
+            )
+
     empresa = db.query(EmpresaConfig).first()
-    
     pdf_bytes = generar_pdf_visita(visita, empresa)
     return Response(
         content=pdf_bytes,

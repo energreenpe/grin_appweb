@@ -434,7 +434,7 @@ export default function StepInicioInspeccion({ onNext }) {
                 disabled={loadingGuardar}
                 style={{ flex: 2, padding: '0.65rem', background: 'var(--primary-color, #62B989)', border: 'none', borderRadius: '8px', color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: '0.95rem' }}
               >
-                {loadingGuardar ? 'Guardando...' : '✓ Guardar Cliente'}
+                {loadingGuardar ? 'Guardando...' : '✓ Crear Cliente'}
               </button>
             </div>
           </form>

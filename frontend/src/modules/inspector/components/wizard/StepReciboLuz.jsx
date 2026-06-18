@@ -1,21 +1,20 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useWizardStore } from '../../store/wizardStore';
 import { inspectorApi } from '../../api/inspectorApi';
-
-const BASE_URL = import.meta.env.VITE_API_URL
-  ? import.meta.env.VITE_API_URL.replace('/api', '')
-  : 'http://localhost:8000';
+import { notify } from '../../../../lib/notify';
+import { fileUrl } from '../../../../lib/api';
+import { toWebpFile, MAX_INPUT_BYTES } from '../../lib/imageTools';
+import CameraCapture from '../CameraCapture';
 
 export default function StepReciboLuz({ onNext }) {
   const { data, setData, visitaId } = useWizardStore();
   const [loading, setLoading] = useState(false);
   const [previewLocal, setPreviewLocal] = useState(null); // blob URL previo a subir
-  const inputCamaraRef = useRef(null);
-  const inputGaleriaRef = useRef(null);
+  const [showCamera, setShowCamera] = useState(false);
 
   const handleFileUpload = async (file) => {
     if (!file) return;
-    if (!visitaId) { alert('Error: Visita no creada aún.'); return; }
+    if (!visitaId) { notify('La visita aún no se ha creado. Vuelve al primer paso.'); return; }
 
     // Preview local inmediato
     setPreviewLocal(URL.createObjectURL(file));
@@ -26,15 +25,37 @@ export default function StepReciboLuz({ onNext }) {
       setData({ recibo_ruta: updatedVisita.recibo_ruta });
     } catch (error) {
       console.error('Error subiendo recibo', error);
-      alert('Hubo un error subiendo la foto del recibo');
+      notify('No se pudo subir la foto del recibo. Revisa tu conexión.');
       setPreviewLocal(null);
     } finally {
       setLoading(false);
     }
   };
 
+  // Galería/archivo: comprimir a WebP en el cliente antes de subir.
+  const handleGalleryPick = async (file) => {
+    if (!file) return;
+    if (file.size > MAX_INPUT_BYTES) {
+      notify(`La imagen es demasiado grande (máx ${MAX_INPUT_BYTES / (1024 * 1024)} MB). Elige una foto más liviana.`);
+      return;
+    }
+    try {
+      const webp = await toWebpFile(file);
+      await handleFileUpload(webp);
+    } catch (e) {
+      console.error('procesando imagen', e);
+      notify('No se pudo procesar la imagen.');
+    }
+  };
+
+  // Cámara: ya devuelve un File .webp listo para subir.
+  const handleCameraCapture = async (file) => {
+    setShowCamera(false);
+    await handleFileUpload(file);
+  };
+
   const imageUrl = data.recibo_ruta
-    ? `${BASE_URL}${data.recibo_ruta}`
+    ? fileUrl(data.recibo_ruta)
     : previewLocal;
 
   const btnBase = {
@@ -54,6 +75,10 @@ export default function StepReciboLuz({ onNext }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
+      {showCamera && (
+        <CameraCapture onCapture={handleCameraCapture} onClose={() => setShowCamera(false)} />
+      )}
+
       <div style={{ textAlign: 'center' }}>
         <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '0.3rem' }}>
           Foto del Recibo de Luz
@@ -115,31 +140,25 @@ export default function StepReciboLuz({ onNext }) {
 
       {/* ── Botones: Tomar Foto / Galería ── */}
       <div style={{ display: 'flex', gap: '0.75rem', width: '100%', maxWidth: '480px' }}>
-        {/* Botón Cámara */}
-        <label
+        {/* Botón Cámara (getUserMedia) */}
+        <button
+          type="button"
           style={{
             ...btnBase,
+            fontFamily: 'inherit',
             background: 'var(--primary-color, #62B989)',
             color: '#fff',
             opacity: loading ? 0.6 : 1,
             cursor: loading ? 'not-allowed' : 'pointer',
           }}
+          disabled={loading}
+          onClick={() => setShowCamera(true)}
           title="Abre la cámara del dispositivo"
         >
           📷 {imageUrl ? 'Tomar de nuevo' : 'Tomar Foto'}
-          <input
-            ref={inputCamaraRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            style={{ display: 'none' }}
-            disabled={loading}
-            onChange={(e) => handleFileUpload(e.target.files[0])}
-            onClick={(e) => { e.target.value = null; }}
-          />
-        </label>
+        </button>
 
-        {/* Botón Galería */}
+        {/* Botón Galería (se comprime a WebP) */}
         <label
           style={{
             ...btnBase,
@@ -153,12 +172,11 @@ export default function StepReciboLuz({ onNext }) {
         >
           📁 Subir Foto
           <input
-            ref={inputGaleriaRef}
             type="file"
             accept="image/*"
             style={{ display: 'none' }}
             disabled={loading}
-            onChange={(e) => handleFileUpload(e.target.files[0])}
+            onChange={(e) => handleGalleryPick(e.target.files[0])}
             onClick={(e) => { e.target.value = null; }}
           />
         </label>
