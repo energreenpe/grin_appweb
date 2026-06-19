@@ -9,6 +9,7 @@ from app.db import get_db
 from app.modules.quote.router import router as quote_router
 from app.modules.quote.service import QuoteError
 from app.modules.inspector.router import router as inspector_router
+from app.modules.math.router import router as math_router
 
 settings = get_settings()
 
@@ -37,7 +38,7 @@ async def quote_error_handler(request: Request, exc: QuoteError):
 
 # ── ROUTERS — agregar aquí cada nuevo módulo ──────────────────────────────────
 app.include_router(quote_router, prefix="/api/quote", tags=["Quote"])
-# app.include_router(math_router,     prefix="/api/math",      tags=["Math"])      # Módulo 2
+app.include_router(math_router,      prefix="/api/math",      tags=["Math"])      # Módulo 2
 app.include_router(inspector_router, prefix="/api/inspector", tags=["Inspector"]) # Módulo 3
 
 # ── ARCHIVOS ESTÁTICOS (UPLOADS) ───────────────────────────────────────────────

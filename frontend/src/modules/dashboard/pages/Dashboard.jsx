@@ -4,7 +4,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const modules = [
-    { id: 'math', name: 'MATH', icon: '📐', active: false },
+    { id: 'math', name: 'MATH', icon: '📐', active: true, path: '/math' },
     { id: 'inspector', name: 'INSPECTOR', icon: '📋', active: true, path: '/inspector' },
     { id: 'quote', name: 'QUOTE', icon: '💰', active: true, path: '/quote' },
   ];

@@ -58,16 +58,16 @@ export default function Sidebar({ onNavigate, showClose = false, onClose }) {
           Módulos
         </div>
         <NavLink to="/quote" style={navStyle} onClick={onNavigate}>
-          💰 Cotizador (QUOTE)
+          💰 Cotizaciones (QUOTE)
         </NavLink>
         <NavLink to="/products" style={navStyle} onClick={onNavigate}>
           📦 Productos
         </NavLink>
-        <div style={{...navStyle({isActive: false}), opacity: 0.5, cursor: 'not-allowed'}}>
-          📐 Matemático (MATH)
-        </div>
+        <NavLink to="/math" style={navStyle} onClick={onNavigate}>
+          📐 Calculos Solares (MATH)
+        </NavLink>
         <NavLink to="/inspector" style={navStyle} onClick={onNavigate}>
-          📋 Inspección (INSPECTOR)
+          📋 Inspecciónes (INSPECTOR)
         </NavLink>
       </nav>
     </aside>

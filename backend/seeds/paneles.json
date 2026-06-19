@@ -1,0 +1,92 @@
+[
+    {
+        "id": 1,
+        "descripcion": "Astronergy monofacial 580Wp [ASTRO N5 CHSM72N(DG)/F-HC-580]",
+        "Potencia": 580,
+        "Vmpp": 43.95,
+        "Impp": 13.2,
+        "Voc": 52.3,
+        "Isc": 13.98
+    },
+    {
+        "id": 2,
+        "descripcion": "Astronergy bifacial 440Wp [ASTRO N7s CHSM54RNs(DG)(BLH)/F-BH-440]",
+        "Potencia": 440,
+        "Vmpp": 33.05,
+        "Impp": 13.31,
+        "Voc": 39,
+        "Isc": 14.1
+    },
+    {
+        "id": 3,
+        "descripcion": "Astronergy bifacial 605Wp [ASTRO N7 CHSM66RN(DG)/F-BH-605]",
+        "Potencia": 605,
+        "Vmpp": 41.18,
+        "Impp": 14.69,
+        "Voc": 48.59,
+        "Isc": 15.86
+    },
+    {
+        "id": 4,
+        "descripcion": "Astronergy bifacial 610Wp [ASTRO N7 CHSM66RN(DG)/F-BH-610]",
+        "Potencia": 610,
+        "Vmpp": 41.31,
+        "Impp": 14.77,
+        "Voc": 48.74,
+        "Isc": 15.94
+    },
+    {
+        "id": 5,
+        "descripcion": "JA Solar monofacial 565Wp [JAM72S30-565/LR]",
+        "Potencia": 565,
+        "Vmpp": 41.68,
+        "Impp": 13.56,
+        "Voc": 50.5,
+        "Isc": 14.31
+    },
+    {
+        "id": 6,
+        "descripcion": "JA Solar bifacial 610Wp [JAM66D45-610/LB]",
+        "Potencia": 610,
+        "Vmpp": 39.77,
+        "Impp": 15.34,
+        "Voc": 48.1,
+        "Isc": 16.05
+    },
+    {
+        "id": 7,
+        "descripcion": "Jinko Solar monofacial 585Wp [JKM585N-72HL4-(V)-F6]",
+        "Potencia": 585,
+        "Vmpp": 43.53,
+        "Impp": 13.44,
+        "Voc": 52.47,
+        "Isc": 14.07
+    },
+    {
+        "id": 8,
+        "descripcion": "Jinko solar bifacial 615Wp [JKM605-630N-66HL4M-BDV-F3]",
+        "Potencia": 615,
+        "Vmpp": 40.6,
+        "Impp": 15.15,
+        "Voc": 48.88,
+        "Isc": 16.02
+    },
+    {
+        "id": 9,
+        "descripcion": "Trina Solar monofacial 605Wp [TSM-NE19R-605]",
+        "Potencia": 605,
+        "Vmpp": 40.5,
+        "Impp": 14.94,
+        "Voc": 48.7,
+        "Isc": 15.83
+    },
+    {
+        "id": 10,
+        "descripcion": "Panel03",
+        "Potencia": 605.0,
+        "Vmpp": 40.5,
+        "Impp": 14.94,
+        "Voc": 48.7,
+        "Isc": 15.83
+    }
+]

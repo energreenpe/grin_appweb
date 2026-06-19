@@ -1,0 +1,5 @@
+# Dependencias SOLO de desarrollo/tests (no requeridas en producción).
+# Instalar con:  pip install -r requirements-dev.txt
+# httpx ya viene como transitiva de FastAPI y lo usa TestClient.
+
+pytest==8.2.2

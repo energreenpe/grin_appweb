@@ -1,0 +1,210 @@
+[
+    {
+        "region": "Amazonas",
+        "HSP": {
+            "minimo": 3.43,
+            "promedio": 4.33,
+            "mayor": 5.23
+        }
+    },
+    {
+        "region": "Áncash",
+        "HSP": {
+            "minimo": 3.63,
+            "promedio": 4.53,
+            "mayor": 5.43
+        }
+    },
+    {
+        "region": "Apurímac",
+        "HSP": {
+            "minimo": 3.84,
+            "promedio": 4.74,
+            "mayor": 5.64
+        }
+    },
+    {
+        "region": "Arequipa",
+        "HSP": {
+            "minimo": 4.33,
+            "promedio": 5.23,
+            "mayor": 6.13
+        }
+    },
+    {
+        "region": "Ayacucho",
+        "HSP": {
+            "minimo": 3.84,
+            "promedio": 4.74,
+            "mayor": 5.64
+        }
+    },
+    {
+        "region": "Cajamarca",
+        "HSP": {
+            "minimo": 3.43,
+            "promedio": 4.33,
+            "mayor": 5.23
+        }
+    },
+    {
+        "region": "Callao",
+        "HSP": {
+            "minimo": 2.86,
+            "promedio": 3.76,
+            "mayor": 4.66
+        }
+    },
+    {
+        "region": "Cusco",
+        "HSP": {
+            "minimo": 3.84,
+            "promedio": 4.74,
+            "mayor": 5.64
+        }
+    },
+    {
+        "region": "Huancavelica",
+        "HSP": {
+            "minimo": 3.64,
+            "promedio": 4.54,
+            "mayor": 5.44
+        }
+    },
+    {
+        "region": "Huánuco",
+        "HSP": {
+            "minimo": 3.84,
+            "promedio": 4.74,
+            "mayor": 5.64
+        }
+    },
+    {
+        "region": "Ica",
+        "HSP": {
+            "minimo": 4.48,
+            "promedio": 5.38,
+            "mayor": 6.28
+        }
+    },
+    {
+        "region": "Junín",
+        "HSP": {
+            "minimo": 3.84,
+            "promedio": 4.74,
+            "mayor": 5.64
+        }
+    },
+    {
+        "region": "La Libertad",
+        "HSP": {
+            "minimo": 3.43,
+            "promedio": 4.33,
+            "mayor": 5.23
+        }
+    },
+    {
+        "region": "Lambayeque",
+        "HSP": {
+            "minimo": 3.43,
+            "promedio": 4.33,
+            "mayor": 5.23
+        }
+    },
+    {
+        "region": "Lima Metropolitana",
+        "HSP": {
+            "minimo": 3.73,
+            "promedio": 2.42,
+            "mayor": 4.94
+        }
+    },
+    {
+        "region": "Lima Provincia",
+        "HSP": {
+            "minimo": 2.76,
+            "promedio": 4.01,
+            "mayor": 4.95
+        }
+    },
+    {
+        "region": "Loreto",
+        "HSP": {
+            "minimo": 3.43,
+            "promedio": 4.33,
+            "mayor": 5.23
+        }
+    },
+    {
+        "region": "Madre de Dios",
+        "HSP": {
+            "minimo": 3.84,
+            "promedio": 4.74,
+            "mayor": 5.64
+        }
+    },
+    {
+        "region": "Moquegua",
+        "HSP": {
+            "minimo": 4.33,
+            "promedio": 5.23,
+            "mayor": 6.13
+        }
+    },
+    {
+        "region": "Pasco",
+        "HSP": {
+            "minimo": 3.64,
+            "promedio": 4.54,
+            "mayor": 5.44
+        }
+    },
+    {
+        "region": "Piura",
+        "HSP": {
+            "minimo": 3.43,
+            "promedio": 4.33,
+            "mayor": 5.23
+        }
+    },
+    {
+        "region": "Puno",
+        "HSP": {
+            "minimo": 3.84,
+            "promedio": 4.74,
+            "mayor": 5.64
+        }
+    },
+    {
+        "region": "San Martín",
+        "HSP": {
+            "minimo": 3.43,
+            "promedio": 4.33,
+            "mayor": 5.23
+        }
+    },
+    {
+        "region": "Tacna",
+        "HSP": {
+            "minimo": 4.33,
+            "promedio": 5.23,
+            "mayor": 6.13
+        }
+    },
+    {
+        "region": "Tumbes",
+        "HSP": {
+            "minimo": 3.43,
+            "promedio": 4.33,
+            "mayor": 5.23
+        }
+    },
+    {
+        "region": "Ucayali",
+        "HSP": {
+            "minimo": 3.61,
+            "promedio": 4.51,
+            "mayor": 5.41
+        }
+    }
+]

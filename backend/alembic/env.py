@@ -13,6 +13,7 @@ from app.config import get_settings
 from app.modules.shared import models as shared_models  # noqa: F401
 from app.modules.quote import models  # noqa: F401
 from app.modules.inspector import models  # noqa: F401
+from app.modules.math import models  # noqa: F401
 
 config = context.config
 settings = get_settings()

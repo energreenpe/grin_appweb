@@ -1,0 +1,186 @@
+[
+    {
+        "id": 1,
+        "descripcion": "SRitar VRLA AGM 12V 100Ah [RA12-100]",
+        "marca": "Ritar",
+        "tipo": "Lead acid",
+        "Vbat": 12,
+        "capacidad": 100
+    },
+    {
+        "id": 2,
+        "descripcion": "Ritar VRLA AGM 12V 150Ah [RA12-150]",
+        "marca": "Ritar",
+        "tipo": "Lead acid",
+        "Vbat": 12,
+        "capacidad": 150
+    },
+    {
+        "id": 3,
+        "descripcion": "Ritar VRLA AGM 12V 200Ah [RA12-200]",
+        "marca": "Ritar",
+        "tipo": "Lead acid",
+        "Vbat": 12,
+        "capacidad": 200
+    },
+    {
+        "id": 4,
+        "descripcion": "Ritar VRLA AGM 12V 260Ah [RA12-260]",
+        "marca": "Ritar",
+        "tipo": "Lead acid",
+        "Vbat": 12,
+        "capacidad": 260
+    },
+    {
+        "id": 5,
+        "descripcion": "Ritar VRLA AGM 12V 100Ah [FT12-100]",
+        "marca": "Ritar",
+        "tipo": "Lead acid",
+        "Vbat": 12,
+        "capacidad": 100
+    },
+    {
+        "id": 6,
+        "descripcion": "Ritar VRLA AGM 12V 150Ah [FT12-150]",
+        "marca": "Ritar",
+        "tipo": "Lead acid",
+        "Vbat": 12,
+        "capacidad": 150
+    },
+    {
+        "id": 7,
+        "descripcion": "Ritar VRLA AGM 12V 200Ah [FT12-200]",
+        "marca": "Ritar",
+        "tipo": "Lead acid",
+        "Vbat": 12,
+        "capacidad": 200
+    },
+    {
+        "id": 8,
+        "descripcion": "Ritar VRLA GEL 12V 100Ah [DG12-100]",
+        "marca": "Ritar",
+        "tipo": "Lead acid",
+        "Vbat": 12,
+        "capacidad": 100
+    },
+    {
+        "id": 9,
+        "descripcion": "RRitar VRLA GEL 12V 150Ah [DG12-150]",
+        "marca": "Ritar",
+        "tipo": "Lead acid",
+        "Vbat": 12,
+        "capacidad": 150
+    },
+    {
+        "id": 10,
+        "descripcion": "Ritar VRLA GEL 12V 200Ah [DG12-200]",
+        "marca": "Ritar",
+        "tipo": "Lead acid",
+        "Vbat": 12,
+        "capacidad": 200
+    },
+    {
+        "id": 11,
+        "descripcion": "Ritar VRLA GEL 12V 260Ah [DG12-260]",
+        "marca": "Ritar",
+        "tipo": "Lead acid",
+        "Vbat": 12,
+        "capacidad": 260
+    },
+    {
+        "id": 12,
+        "descripcion": "Telperion VRLA AGM 12V 100Ah",
+        "marca": "Telperion",
+        "tipo": "Lead acid",
+        "Vbat": 12,
+        "capacidad": 100
+    },
+    {
+        "id": 13,
+        "descripcion": "Telperion VRLA AGM 12V 150Ah",
+        "marca": "Telperion",
+        "tipo": "Lead acid",
+        "Vbat": 12,
+        "capacidad": 150
+    },
+    {
+        "id": 14,
+        "descripcion": "Telperion VRLA AGM 12V 200Ah",
+        "marca": "Telperion",
+        "tipo": "Lead acid",
+        "Vbat": 12,
+        "capacidad": 200
+    },
+    {
+        "id": 15,
+        "descripcion": "Telperion VRLA GEL 12V 100Ah",
+        "marca": "Telperion",
+        "tipo": "Lead acid",
+        "Vbat": 12,
+        "capacidad": 100
+    },
+    {
+        "id": 16,
+        "descripcion": "Telperion VRLA GEL 12V 150Ah",
+        "marca": "Telperion",
+        "tipo": "Lead acid",
+        "Vbat": 12,
+        "capacidad": 150
+    },
+    {
+        "id": 17,
+        "descripcion": "Telperion VRLA GEL 12V 200Ah",
+        "marca": "Telperion",
+        "tipo": "Lead acid",
+        "Vbat": 12,
+        "capacidad": 200
+    },
+    {
+        "id": 18,
+        "descripcion": "Pylontech LFP 12V 100Ah [RT12-100]",
+        "marca": "Pylontech",
+        "tipo": "Litio",
+        "Vbat": 12,
+        "capacidad": 100
+    },
+    {
+        "id": 19,
+        "descripcion": "Pylontech LFP 48V 75Ah [US3000C]",
+        "marca": "Pylontech",
+        "tipo": "Litio",
+        "Vbat": 48,
+        "capacidad": 75
+    },
+    {
+        "id": 20,
+        "descripcion": "Pylontech LFP 48V 100Ah [US5000]",
+        "marca": "Pylontech",
+        "tipo": "Litio",
+        "Vbat": 48,
+        "capacidad": 100
+    },
+    {
+        "id": 21,
+        "descripcion": "Dyness LFP 48V 50Ah [B4850]",
+        "marca": "Dyness",
+        "tipo": "Litio",
+        "Vbat": 48,
+        "capacidad": 50
+    },
+    {
+        "id": 22,
+        "descripcion": "Dyness LFP 48V 75Ah [B3]",
+        "marca": "Dyness",
+        "tipo": "Litio",
+        "Vbat": 48,
+        "capacidad": 75
+    },
+    {
+        "id": 23,
+        "descripcion": "Dyness LFP 48V 100Ah [A48100]",
+        "marca": "Dyness",
+        "tipo": "Litio",
+        "Vbat": 48,
+        "capacidad": 100
+    }
+]

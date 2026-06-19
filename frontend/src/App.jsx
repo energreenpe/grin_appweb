@@ -6,6 +6,8 @@ import QuoteEditor from './modules/quote/pages/QuoteEditor';
 import ProductsManager from './modules/quote/pages/ProductsManager';
 import InspectorList from './modules/inspector/pages/InspectorList';
 import WizardPage from './modules/inspector/pages/WizardPage';
+import MathList from './modules/math/pages/MathList';
+import CalculoWizardPage from './modules/math/pages/CalculoWizardPage';
 
 function App() {
   return (
@@ -22,6 +24,9 @@ function App() {
           
           <Route path="/inspector" element={<InspectorList />} />
           <Route path="/inspector/new" element={<WizardPage />} />
+
+          <Route path="/math" element={<MathList />} />
+          <Route path="/math/new" element={<CalculoWizardPage />} />
         </Route>
         
         <Route path="*" element={<Navigate to="/" replace />} />
