@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { inspectorApi } from '../api/inspectorApi';
 import VisitaCard from '../components/VisitaCard';
+import SearchableSelect from '../../../components/SearchableSelect';
 import { useWizardStore } from '../store/wizardStore';
 
 export default function InspectorList() {
@@ -58,50 +59,53 @@ export default function InspectorList() {
         </button>
       </div>
 
-      <div className="glass-panel" style={{ padding: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+      <div className="glass-panel" style={{ padding: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', position: 'relative', zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Tipo Cliente:</label>
-          <select 
-            className="input-field" 
-            style={{ width: 'auto', minWidth: '150px' }}
+          <SearchableSelect
+            style={{ minWidth: '150px' }}
             value={filtroTipo}
-            onChange={(e) => setFiltroTipo(e.target.value)}
-          >
-            <option value="">Todos</option>
-            <option value="Persona">Persona</option>
-            <option value="Empresa">Empresa</option>
-          </select>
+            onChange={setFiltroTipo}
+            placeholder="Todos"
+            options={[
+              { value: '', label: 'Todos' },
+              { value: 'Persona', label: 'Persona' },
+              { value: 'Empresa', label: 'Empresa' },
+            ]}
+          />
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Sistema:</label>
-          <select 
-            className="input-field" 
-            style={{ width: 'auto', minWidth: '180px' }}
+          <SearchableSelect
+            style={{ minWidth: '180px' }}
             value={filtroSistema}
-            onChange={(e) => setFiltroSistema(e.target.value)}
-          >
-            <option value="">Todos</option>
-            <option value="SFV Autoconsumo">SFV Autoconsumo</option>
-            <option value="SFV Híbrido">SFV Híbrido</option>
-            <option value="SFV Aislado">SFV Aislado</option>
-            <option value="Terma Solar">Terma Solar</option>
-            <option value="BESS">BESS</option>
-          </select>
+            onChange={setFiltroSistema}
+            placeholder="Todos"
+            options={[
+              { value: '', label: 'Todos' },
+              { value: 'SFV Autoconsumo', label: 'SFV Autoconsumo' },
+              { value: 'SFV Híbrido', label: 'SFV Híbrido' },
+              { value: 'SFV Aislado', label: 'SFV Aislado' },
+              { value: 'Terma Solar', label: 'Terma Solar' },
+              { value: 'BESS', label: 'BESS' },
+            ]}
+          />
         </div>
-        
+
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Estado:</label>
-          <select 
-            className="input-field" 
-            style={{ width: 'auto', minWidth: '150px' }}
+          <SearchableSelect
+            style={{ minWidth: '150px' }}
             value={filtroEstado}
-            onChange={(e) => setFiltroEstado(e.target.value)}
-          >
-            <option value="">Todos</option>
-            <option value="completada">Completadas</option>
-            <option value="borrador">Borradores</option>
-          </select>
+            onChange={setFiltroEstado}
+            placeholder="Todos"
+            options={[
+              { value: '', label: 'Todos' },
+              { value: 'completada', label: 'Completadas' },
+              { value: 'borrador', label: 'Borradores' },
+            ]}
+          />
         </div>
         
         <button className="btn btn-secondary" onClick={fetchVisitas} style={{ marginLeft: 'auto' }}>

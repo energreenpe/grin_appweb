@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import SearchableSelect from '../../../components/SearchableSelect';
 
 export default function ProductFormModal({ product, onSave, onCancel }) {
   const [formData, setFormData] = useState({
@@ -107,10 +108,14 @@ export default function ProductFormModal({ product, onSave, onCancel }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
               <label className="form-label">Moneda</label>
-              <select name="moneda" value={formData.moneda} onChange={handleChange} className="input-field">
-                <option value="USD">USD</option>
-                <option value="PEN">PEN</option>
-              </select>
+              <SearchableSelect
+                value={formData.moneda}
+                onChange={(v) => handleChange({ target: { name: 'moneda', value: v } })}
+                options={[
+                  { value: 'USD', label: 'USD' },
+                  { value: 'PEN', label: 'PEN' },
+                ]}
+              />
             </div>
             <div>
               <label className="form-label">Precio Venta *</label>

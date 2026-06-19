@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuoteStore } from '../store/quoteStore';
 import { quoteApi } from '../api/quoteApi';
 import { notify } from '../../../lib/notify';
+import SearchableSelect from '../../../components/SearchableSelect';
 
 export default function CompanyHeader({ readOnly = false }) {
   const { cotizacion, updateHeader, beginLogoUpload, endLogoUpload } = useQuoteStore();
@@ -122,17 +123,16 @@ export default function CompanyHeader({ readOnly = false }) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
         <div>
           <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Vendedor</label>
-          <select
+          <SearchableSelect
             value={cotizacion.vendedor_nombre || ''}
-            onChange={handleSellerChange}
+            onChange={(v) => handleSellerChange({ target: { value: v } })}
             disabled={readOnly}
-            className="input-field"
-          >
-            <option value="">Seleccione vendedor...</option>
-            {vendedores.map(v => (
-              <option key={v.id} value={v.nombre}>{v.nombre}</option>
-            ))}
-          </select>
+            placeholder="Seleccione vendedor..."
+            options={[
+              { value: '', label: 'Seleccione vendedor...' },
+              ...vendedores.map((v) => ({ value: v.nombre, label: v.nombre })),
+            ]}
+          />
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Correo Vendedor</label>

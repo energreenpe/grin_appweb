@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 
 /**
- * Select buscable reutilizable con el mismo diseño que los dropdowns del módulo
- * (input + lista filtrable, solo scroll vertical, se cierra al tocar fuera).
- * Funciona en escritorio y móvil (no usa el <select> nativo).
+ * Select buscable reutilizable (capa compartida del frontend).
+ * Mismo diseño que los dropdowns del módulo MATH: input + lista filtrable, solo
+ * scroll vertical, se cierra al tocar fuera. Funciona en escritorio y móvil
+ * (no usa el <select> nativo). Usado por quote e inspector desde aquí.
  *
  * props:
  *  - options: [{ value, label }]   (label es lo que se muestra/filtra; conserva todos los datos)
@@ -38,7 +39,7 @@ export default function SearchableSelect({ options = [], value, onChange, placeh
     width: '100%', padding: '0.5rem 0.75rem', background: 'var(--surface-color)',
     border: '1px solid var(--border-color)', borderRadius: 'var(--radius)', color: 'var(--text-primary)',
     fontFamily: 'inherit', fontSize: '0.95rem', boxSizing: 'border-box', outline: 'none',
-    cursor: disabled ? 'not-allowed' : 'text',
+    cursor: disabled ? 'not-allowed' : 'text', opacity: disabled ? 0.6 : 1,
   };
   const dropdownStyle = {
     position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--surface-color)',

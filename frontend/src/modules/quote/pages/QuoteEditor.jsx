@@ -153,8 +153,9 @@ export default function QuoteEditor() {
             en móvil una sola columna -> Empresa, Cliente y luego Resumen apilados. */}
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 350px', gap: '1.5rem', alignItems: 'stretch' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            {/* Datos de Empresa */}
-            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+            {/* Datos de Empresa — zIndex elevado para que el dropdown de Vendedor
+                no quede oculto bajo el panel de Cliente (ambos son glass-panel). */}
+            <div className="glass-panel" style={{ padding: '1.5rem', position: 'relative', zIndex: 30 }}>
               <CompanyHeader readOnly={readOnly} />
             </div>
 

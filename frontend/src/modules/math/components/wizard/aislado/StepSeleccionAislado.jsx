@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCalculoStore } from '../../../store/calculoStore';
 import { mathApi } from '../../../api/mathApi';
-import SearchableSelect from '../../SearchableSelect';
+import SearchableSelect from '../../../../../components/SearchableSelect';
 
 const normalizarTipoBateria = (tipo) =>
   (tipo || '').toLowerCase().includes('li') ? 'Lithium' : 'Lead acid';

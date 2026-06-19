@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuoteStore } from '../store/quoteStore';
+import SearchableSelect from '../../../components/SearchableSelect';
 
 export default function ServiceFormModal({ onConfirm, onCancel }) {
   const [descripcion, setDescripcion] = useState("");
@@ -66,14 +67,18 @@ export default function ServiceFormModal({ onConfirm, onCancel }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Unidad</label>
-              <select value={unidad} onChange={e => setUnidad(e.target.value)} className="input-field">
-                <option value="Und">Und</option>
-                <option value="Kg">Kg</option>
-                <option value="Lt">Lt</option>
-                <option value="Mts">Mts</option>
-                <option value="Glb">Glb</option>
-                <option value="Kit">Kit</option>
-              </select>
+              <SearchableSelect
+                value={unidad}
+                onChange={setUnidad}
+                options={[
+                  { value: 'Und', label: 'Und' },
+                  { value: 'Kg', label: 'Kg' },
+                  { value: 'Lt', label: 'Lt' },
+                  { value: 'Mts', label: 'Mts' },
+                  { value: 'Glb', label: 'Glb' },
+                  { value: 'Kit', label: 'Kit' },
+                ]}
+              />
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Cantidad</label>
@@ -103,10 +108,14 @@ export default function ServiceFormModal({ onConfirm, onCancel }) {
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Moneda</label>
-              <select value={moneda} onChange={e => setMoneda(e.target.value)} className="input-field">
-                <option value="PEN">Soles (PEN)</option>
-                <option value="USD">Dólares (USD)</option>
-              </select>
+              <SearchableSelect
+                value={moneda}
+                onChange={setMoneda}
+                options={[
+                  { value: 'PEN', label: 'Soles (PEN)' },
+                  { value: 'USD', label: 'Dólares (USD)' },
+                ]}
+              />
             </div>
           </div>
 

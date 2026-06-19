@@ -1,12 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuoteStore } from '../store/quoteStore';
 import { quoteApi } from '../api/quoteApi';
 import { notify } from '../../../lib/notify';
+import SearchableSelect from '../../../components/SearchableSelect';
 
 export default function QuoteHeader({ readOnly = false }) {
   const { cotizacion, updateHeader } = useQuoteStore();
   const [clientes, setClientes] = useState([]);
   const [tipoCambio, setTipoCambio] = useState('');
+  const [showNombreDrop, setShowNombreDrop] = useState(false);
+  const [showDocDrop, setShowDocDrop] = useState(false);
+  const nombreRef = useRef(null);
+  const docRef = useRef(null);
 
   const loadClientes = useCallback(async () => {
     try {
@@ -30,6 +35,16 @@ export default function QuoteHeader({ readOnly = false }) {
       }
     }
   }, [cotizacion?.id, cotizacion?.tipo_cambio]);
+
+  // Cierra los dropdowns de cliente al tocar fuera (también funciona en móvil).
+  useEffect(() => {
+    const handler = (e) => {
+      if (nombreRef.current && !nombreRef.current.contains(e.target)) setShowNombreDrop(false);
+      if (docRef.current && !docRef.current.contains(e.target)) setShowDocDrop(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   if (!cotizacion) return null;
 
@@ -63,6 +78,29 @@ export default function QuoteHeader({ readOnly = false }) {
     updateHeader(cotizacion.id, updates);
   };
 
+  // Selecciona un cliente del dropdown y autocompleta todos sus campos.
+  const seleccionarCliente = (c) => {
+    const updates = {};
+    fillFromCliente(updates, c);
+    updateHeader(cotizacion.id, updates);
+    setShowNombreDrop(false);
+    setShowDocDrop(false);
+  };
+
+  // Listas filtradas y estilos del dropdown de cliente.
+  const qNombre = (cotizacion.cliente_nombre || '').trim().toLowerCase();
+  const clientesNombre = qNombre ? clientes.filter(c => c.nombre.toLowerCase().includes(qNombre)) : clientes;
+  const qDoc = (cotizacion.cliente_doc || '').trim().toLowerCase();
+  const clientesDoc = clientes.filter(c => c.documento && (qDoc ? c.documento.toLowerCase().includes(qDoc) : true));
+  const dropStyle = {
+    position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--surface-color)',
+    border: '1px solid var(--border-color)', borderRadius: 'var(--radius)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+    zIndex: 100, maxHeight: '240px', overflowX: 'hidden', overflowY: 'auto', marginTop: '4px',
+  };
+  const dropItem = {
+    padding: '0.6rem 0.8rem', cursor: 'pointer', borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem',
+  };
+
   // Margen de utilidad: el usuario edita el % (entero, mínimo 0), se guarda como
   // multiplicador (18% -> 1.18). Va de 1 en 1% con los botones del input.
   const handleMargenChange = (e) => {
@@ -81,37 +119,59 @@ export default function QuoteHeader({ readOnly = false }) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
         <div>
           <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Cliente</label>
-          <input 
-            type="text" 
-            name="cliente_nombre"
-            list="clientes-list"
-            value={cotizacion.cliente_nombre || ''} 
-            onChange={handleChange}
-            className="input-field"
-            placeholder="Nombre del cliente"
-          />
-          <datalist id="clientes-list">
-            {clientes.map(c => (
-              <option key={c.id} value={c.nombre} />
-            ))}
-          </datalist>
+          <div ref={nombreRef} style={{ position: 'relative' }}>
+            <input
+              type="text"
+              name="cliente_nombre"
+              autoComplete="off"
+              value={cotizacion.cliente_nombre || ''}
+              onChange={(e) => { handleChange(e); setShowNombreDrop(true); }}
+              onFocus={() => setShowNombreDrop(true)}
+              className="input-field"
+              placeholder="Nombre del cliente"
+            />
+            {showNombreDrop && clientesNombre.length > 0 && (
+              <div style={dropStyle}>
+                {clientesNombre.map(c => (
+                  <div key={c.id} style={dropItem}
+                    onMouseEnter={ev => (ev.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                    onMouseLeave={ev => (ev.currentTarget.style.background = 'transparent')}
+                    onClick={() => seleccionarCliente(c)}>
+                    <strong>{c.nombre}</strong>
+                    {c.documento && <span style={{ color: 'var(--text-secondary)', marginLeft: '0.5rem', fontSize: '0.85rem' }}>{c.documento}</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>RUC / DNI</label>
-          <input
-            type="text"
-            name="cliente_doc"
-            list="clientes-doc-list"
-            value={cotizacion.cliente_doc || ''}
-            onChange={handleChange}
-            className="input-field"
-            placeholder="Documento"
-          />
-          <datalist id="clientes-doc-list">
-            {clientes.filter(c => c.documento).map(c => (
-              <option key={c.id} value={c.documento}>{c.nombre}</option>
-            ))}
-          </datalist>
+          <div ref={docRef} style={{ position: 'relative' }}>
+            <input
+              type="text"
+              name="cliente_doc"
+              autoComplete="off"
+              value={cotizacion.cliente_doc || ''}
+              onChange={(e) => { handleChange(e); setShowDocDrop(true); }}
+              onFocus={() => setShowDocDrop(true)}
+              className="input-field"
+              placeholder="Documento"
+            />
+            {showDocDrop && clientesDoc.length > 0 && (
+              <div style={dropStyle}>
+                {clientesDoc.map(c => (
+                  <div key={c.id} style={dropItem}
+                    onMouseEnter={ev => (ev.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                    onMouseLeave={ev => (ev.currentTarget.style.background = 'transparent')}
+                    onClick={() => seleccionarCliente(c)}>
+                    <strong>{c.documento}</strong>
+                    <span style={{ color: 'var(--text-secondary)', marginLeft: '0.5rem', fontSize: '0.85rem' }}>{c.nombre}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -182,15 +242,14 @@ export default function QuoteHeader({ readOnly = false }) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
         <div>
           <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Moneda</label>
-          <select 
-            name="moneda"
-            value={cotizacion.moneda} 
-            onChange={handleChange}
-            className="input-field"
-          >
-            <option value="Soles (PEN)">Soles (PEN)</option>
-            <option value="Dólares (USD)">Dólares (USD)</option>
-          </select>
+          <SearchableSelect
+            value={cotizacion.moneda}
+            onChange={(v) => handleChange({ target: { name: 'moneda', value: v } })}
+            options={[
+              { value: 'Soles (PEN)', label: 'Soles (PEN)' },
+              { value: 'Dólares (USD)', label: 'Dólares (USD)' },
+            ]}
+          />
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Tipo de Cambio</label>

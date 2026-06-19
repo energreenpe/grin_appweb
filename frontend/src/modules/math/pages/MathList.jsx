@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { mathApi } from '../api/mathApi';
 import CalculoCard from '../components/CalculoCard';
-import SearchableSelect from '../components/SearchableSelect';
+import SearchableSelect from '../../../components/SearchableSelect';
 import { useCalculoStore } from '../store/calculoStore';
 
 export default function MathList() {
