@@ -1,0 +1,13 @@
+# Dockerfile.worker — Imagen del worker RQ.
+# NO necesita LibreOffice: la conversión DOCX/XLSX→PDF se delega por HTTP a Gotenberg.
+# En Linux usa el Worker estándar de RQ (fork); el código detecta el SO automáticamente.
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+CMD ["python", "-m", "workers.worker"]

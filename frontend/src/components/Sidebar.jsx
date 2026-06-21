@@ -69,6 +69,9 @@ export default function Sidebar({ onNavigate, showClose = false, onClose }) {
         <NavLink to="/inspector" style={navStyle} onClick={onNavigate}>
           📋 Inspecciónes (INSPECTOR)
         </NavLink>
+        <NavLink to="/list" style={navStyle} onClick={onNavigate}>
+          📝 Editor de Documentos (LIST)
+        </NavLink>
       </nav>
     </aside>
   );

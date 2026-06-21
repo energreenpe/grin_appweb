@@ -7,6 +7,7 @@ export default function Dashboard() {
     { id: 'math', name: 'MATH', icon: '📐', active: true, path: '/math' },
     { id: 'inspector', name: 'INSPECTOR', icon: '📋', active: true, path: '/inspector' },
     { id: 'quote', name: 'QUOTE', icon: '💰', active: true, path: '/quote' },
+    { id: 'list', name: 'LIST', icon: '📝', active: true, path: '/list' },
   ];
 
   return (

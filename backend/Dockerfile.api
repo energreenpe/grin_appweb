@@ -1,0 +1,24 @@
+# Dockerfile.api — Imagen del API FastAPI (slim, SIN LibreOffice).
+# La conversión pesada la hace Gotenberg (servicio aparte); el API solo encola.
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Dependencias del sistema mínimas (psycopg2-binary trae libpq; reportlab/pillow usan wheels).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+# Raíz de uploads: StaticFiles la exige al iniciar. En prod se monta el volumen
+# compartido encima de esta ruta (handoff de archivos con el worker).
+RUN mkdir -p uploads
+
+EXPOSE 8000
+
+# Aplica migraciones y arranca el API. (En prod multi-réplica, ejecutar la migración
+# como job aparte y quitar 'alembic upgrade' de aquí para evitar carreras.)
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]

@@ -5,6 +5,11 @@ from functools import lru_cache
 class Settings(BaseSettings):
     database_url: str
     cors_origins: str = "http://localhost:5173"
+    # Cola de tareas pesadas (Redis + RQ). Default apunta al Redis local de docker-compose.
+    redis_url: str = "redis://localhost:6379/0"
+    # Servicio de conversión a PDF (Gotenberg, contenedor con LibreOffice). El worker
+    # le hace POST HTTP; no se instala LibreOffice en el host. Default = docker-compose.
+    gotenberg_url: str = "http://localhost:3000"
 
     @property
     def cors_origins_list(self) -> list[str]:

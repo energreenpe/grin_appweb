@@ -20,3 +20,6 @@ pypdf==4.2.0
 python-multipart==0.0.9
 xhtml2pdf==0.2.16
 pillow==12.2.0
+# Cola de tareas pesadas (infra async compartida — módulo LIST y futuros)
+redis==5.0.4
+rq==1.16.2

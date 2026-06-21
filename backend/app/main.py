@@ -10,6 +10,8 @@ from app.modules.quote.router import router as quote_router
 from app.modules.quote.service import QuoteError
 from app.modules.inspector.router import router as inspector_router
 from app.modules.math.router import router as math_router
+from app.modules.list.router import router as list_router
+from app.modules.planner.router import router as planner_router
 
 settings = get_settings()
 
@@ -40,6 +42,8 @@ async def quote_error_handler(request: Request, exc: QuoteError):
 app.include_router(quote_router, prefix="/api/quote", tags=["Quote"])
 app.include_router(math_router,      prefix="/api/math",      tags=["Math"])      # Módulo 2
 app.include_router(inspector_router, prefix="/api/inspector", tags=["Inspector"]) # Módulo 3
+app.include_router(list_router,      prefix="/api/list",      tags=["List"])      # Módulo 4
+app.include_router(planner_router,   prefix="/api/planner",   tags=["Planner"])   # Módulo 5
 
 # ── ARCHIVOS ESTÁTICOS (UPLOADS) ───────────────────────────────────────────────
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")

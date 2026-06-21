@@ -1,0 +1,85 @@
+# docker-compose.prod.yml — Despliegue de producción del backend GRIN + módulo LIST.
+#
+# Servicios: api (FastAPI) · worker (RQ) · redis (cola) · gotenberg (conversión).
+# La base de datos PostgreSQL se asume EXTERNA/gestionada: se pasa por DATABASE_URL
+# (ver .env). El frontend se sirve aparte (build estático de Vite).
+#
+# Build/levantar:
+#   docker compose -f docker-compose.prod.yml build
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Variables requeridas (.env junto a este archivo):
+#   DATABASE_URL=postgresql://user:pass@host:5432/bd_grin
+#   CORS_ORIGINS=https://tu-frontend.com
+
+services:
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.api
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: redis://redis:6379/0
+      GOTENBERG_URL: http://gotenberg:3000
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+    ports:
+      - "8000:8000"
+    volumes:
+      - uploads_data:/app/uploads   # compartido con el worker (handoff de archivos)
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: redis://redis:6379/0
+      GOTENBERG_URL: http://gotenberg:3000
+    volumes:
+      - uploads_data:/app/uploads   # MISMO volumen que el API
+    depends_on:
+      - redis
+      - gotenberg
+    restart: unless-stopped
+
+  # ── Antivirus (RECOMENDADO en producción) ──────────────────────────────────
+  # Escaneo de los archivos subidos ANTES de convertir. Para activarlo:
+  #   1) descomentar este servicio,
+  #   2) añadir CLAMAV_URL=clamav:3310 al env del 'api',
+  #   3) integrar el escaneo en service.procesar_upload (pyclamd / clamd).
+  # clamav:
+  #   image: clamav/clamav:stable
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "/usr/local/bin/clamdcheck.sh"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+
+volumes:
+  redis_data:
+  uploads_data:

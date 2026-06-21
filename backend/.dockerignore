@@ -1,0 +1,10 @@
+# Excluye del contexto de build de Docker lo que no debe ir en la imagen.
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+tests/
+uploads/
+.env
+*.log

@@ -8,6 +8,8 @@ import InspectorList from './modules/inspector/pages/InspectorList';
 import WizardPage from './modules/inspector/pages/WizardPage';
 import MathList from './modules/math/pages/MathList';
 import CalculoWizardPage from './modules/math/pages/CalculoWizardPage';
+import ListEditor from './modules/list/pages/ListEditor';
+import ListDocumentList from './modules/list/pages/ListDocumentList';
 
 function App() {
   return (
@@ -27,6 +29,10 @@ function App() {
 
           <Route path="/math" element={<MathList />} />
           <Route path="/math/new" element={<CalculoWizardPage />} />
+
+          <Route path="/list" element={<ListDocumentList />} />
+          <Route path="/list/new" element={<ListEditor />} />
+          <Route path="/list/:id" element={<ListEditor />} />
         </Route>
         
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,0 +1,44 @@
+# docker-compose — Servicios de infraestructura para desarrollo.
+#
+# Servicios de infraestructura para desarrollo:
+#   - redis:     cola de tareas pesadas del worker RQ.
+#   - gotenberg: conversión DOCX/XLSX→PDF (incluye LibreOffice dentro del contenedor;
+#                no se instala LibreOffice en el host).
+# El API y el worker se ejecutan localmente como procesos Python durante el
+# desarrollo. La contenerización de API + worker llega en el entregable de hardening.
+#
+# Uso:
+#   docker compose up -d redis gotenberg   # levanta ambos en segundo plano
+#   docker compose ps                      # verifica estado
+#   docker compose down                    # detiene (conserva el volumen de datos)
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: grin_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    container_name: grin_gotenberg
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  redis_data:
