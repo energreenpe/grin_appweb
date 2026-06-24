@@ -15,6 +15,7 @@ from app.modules.quote import models  # noqa: F401
 from app.modules.inspector import models  # noqa: F401
 from app.modules.math import models  # noqa: F401
 from app.modules.list import models  # noqa: F401
+from app.modules.planner import models  # noqa: F401
 
 config = context.config
 settings = get_settings()

@@ -13,6 +13,7 @@ Nunca rutas absolutas (rompen al cambiar de máquina/contenedor).
 from __future__ import annotations
 
 import os
+import shutil
 
 _BACKEND_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _UPLOADS_ROOT = os.path.join(_BACKEND_ROOT, "uploads")
@@ -49,6 +50,20 @@ def delete(rel_path: str | None) -> None:
         full = _safe_full_path(rel_path)
         if os.path.isfile(full):
             os.remove(full)
+    except (ValueError, OSError):
+        pass
+
+
+def delete_dir(subdir: str | None) -> None:
+    """Borra recursivamente uploads/<subdir> y su contenido (anti-traversal).
+    No-op si está vacío, no existe o no es una ruta válida de uploads. Pensado
+    para limpiar la carpeta de un recurso al borrarlo (ej. fotos de un proyecto)."""
+    if not subdir:
+        return
+    try:
+        full = _safe_full_path(f"uploads/{subdir}")
+        if full != _UPLOADS_ROOT and os.path.isdir(full):
+            shutil.rmtree(full)
     except (ValueError, OSError):
         pass
 

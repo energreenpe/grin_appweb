@@ -8,6 +8,7 @@ export default function Dashboard() {
     { id: 'inspector', name: 'INSPECTOR', icon: '📋', active: true, path: '/inspector' },
     { id: 'quote', name: 'QUOTE', icon: '💰', active: true, path: '/quote' },
     { id: 'list', name: 'LIST', icon: '📝', active: true, path: '/list' },
+    { id: 'planner', name: 'PLANNER', icon: '☀️', active: true, path: '/planner' },
   ];
 
   return (

@@ -10,6 +10,8 @@ import MathList from './modules/math/pages/MathList';
 import CalculoWizardPage from './modules/math/pages/CalculoWizardPage';
 import ListEditor from './modules/list/pages/ListEditor';
 import ListDocumentList from './modules/list/pages/ListDocumentList';
+import PlannerList from './modules/planner/pages/PlannerList';
+import PlannerDetail from './modules/planner/pages/PlannerDetail';
 
 function App() {
   return (
@@ -33,6 +35,9 @@ function App() {
           <Route path="/list" element={<ListDocumentList />} />
           <Route path="/list/new" element={<ListEditor />} />
           <Route path="/list/:id" element={<ListEditor />} />
+
+          <Route path="/planner" element={<PlannerList />} />
+          <Route path="/planner/:id" element={<PlannerDetail />} />
         </Route>
         
         <Route path="*" element={<Navigate to="/" replace />} />

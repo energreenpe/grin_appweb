@@ -72,6 +72,9 @@ export default function Sidebar({ onNavigate, showClose = false, onClose }) {
         <NavLink to="/list" style={navStyle} onClick={onNavigate}>
           📝 Editor de Documentos (LIST)
         </NavLink>
+        <NavLink to="/planner" style={navStyle} onClick={onNavigate}>
+          ☀️ Proyectos (PLANNER)
+        </NavLink>
       </nav>
     </aside>
   );
