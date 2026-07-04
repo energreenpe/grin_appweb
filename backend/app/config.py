@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     # Servicio de conversión a PDF (Gotenberg, contenedor con LibreOffice). El worker
     # le hace POST HTTP; no se instala LibreOffice en el host. Default = docker-compose.
     gotenberg_url: str = "http://localhost:3000"
+    # Reverse geocoding (Nominatim/OpenStreetMap). Su política EXIGE un User-Agent
+    # que identifique la app con un contacto. Cambiar el correo por uno real.
+    nominatim_user_agent: str = "GRIN-Inspector/1.0 (contacto@energreen.pe)"
 
     @property
     def cors_origins_list(self) -> list[str]:

@@ -12,6 +12,12 @@ PasoActual   = Literal["inicio", "tipo_sistema", "conexion_red", "recibo_luz",
                        "cargas_criticas", "tipo_techo", "fotos_techo", "fotos_interior", "done"]
 EstadoVisita = Literal["borrador", "completada"]
 
+class GeoReverseOut(BaseModel):
+    direccion: str = ""
+    error:     Optional[str] = None
+    manual:    bool = False
+    cache:     Optional[bool] = None
+
 class CargaItem(BaseModel):
     nombre:            str
     cantidad_unidades: int

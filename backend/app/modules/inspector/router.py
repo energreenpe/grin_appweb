@@ -1,11 +1,11 @@
 import os
 from typing import List, Optional
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File, Query
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from app.db import get_db
-from app.modules.inspector import schemas, service
+from app.modules.inspector import schemas, service, geocode
 from app.modules.inspector.pdf import generar_pdf_visita
 from app.modules.shared.models import DatosCliente, EmpresaConfig, Usuario
 from app.modules.shared.schemas import DatosClienteOut, DatosClienteCreate, UsuarioOut
@@ -68,6 +68,14 @@ def delete_foto_techo(visita_id: int, index: int, db: Session = Depends(get_db))
 @router.delete("/visitas/{visita_id}/fotos-interior/{index}", response_model=schemas.VisitaOut)
 def delete_foto_interior(visita_id: int, index: int, db: Session = Depends(get_db)):
     return service.eliminar_foto(db, visita_id, "interior", index)
+
+@router.get("/geocode/reverse", response_model=schemas.GeoReverseOut)
+def geocode_reverse(
+    lat: float = Query(..., ge=-90, le=90),
+    lng: float = Query(..., ge=-180, le=180),
+    db: Session = Depends(get_db),
+):
+    return geocode.reverse_geocode(db, lat, lng)
 
 @router.get("/tecnicos", response_model=List[UsuarioOut])
 def get_tecnicos(db: Session = Depends(get_db)):

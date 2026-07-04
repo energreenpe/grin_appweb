@@ -69,6 +69,10 @@ export const inspectorApi = {
     const res = await api.get('/inspector/tecnicos');
     return res.data;
   },
+  geocodeReverse: async (lat, lng) => {
+    const res = await api.get('/inspector/geocode/reverse', { params: { lat, lng } });
+    return res.data;
+  },
   downloadPdf: async (id, filename) => {
     const res = await api.get(`/inspector/visitas/${id}/pdf`, { responseType: 'blob' });
     const url = window.URL.createObjectURL(new Blob([res.data]));

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Numeric, DateTime, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Text, Numeric, DateTime, ForeignKey, JSON, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db import Base
@@ -49,3 +49,19 @@ class Visita(Base):
     # ── Relaciones ORM (solo lectura desde Inspector)
     cliente      = relationship("DatosCliente", foreign_keys=[cliente_id])
     tecnico      = relationship("Usuario", foreign_keys=[tecnico_id])
+
+
+class GeoCache(Base):
+    """Caché de reverse geocoding (coordenadas → nombre de dirección) para no
+    repetir llamadas a Nominatim. La clave es lat/lng redondeados a 4 decimales
+    (~11 m de grilla): dos lecturas del mismo sitio caen en la misma celda."""
+    __tablename__ = "geo_cache"
+    __table_args__ = (
+        UniqueConstraint("lat_key", "lng_key", name="uq_geo_cache_grid"),
+    )
+
+    id         = Column(Integer, primary_key=True, index=True)
+    lat_key    = Column(Numeric(9, 4), nullable=False)
+    lng_key    = Column(Numeric(9, 4), nullable=False)
+    direccion  = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

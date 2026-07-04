@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useWizardStore } from '../../store/wizardStore';
 import { inspectorApi } from '../../api/inspectorApi';
+import { notify } from '../../../../lib/notify';
 
 const TIPO_CLIENTE_OPTIONS = ['Persona', 'Empresa'];
 
@@ -31,6 +32,7 @@ export default function StepInicioInspeccion({ onNext }) {
   const [loadingTecnico, setLoadingTecnico] = useState(false);
 
   const [loadingGuardar, setLoadingGuardar] = useState(false);
+  const [gpsLoading, setGpsLoading] = useState(false);
   const [error, setError] = useState('');
 
   const clienteRef = useRef(null);
@@ -117,6 +119,46 @@ export default function StepInicioInspeccion({ onNext }) {
     } finally {
       setLoadingGuardar(false);
     }
+  };
+
+  // ─── Geolocalización → autocompletar Dirección (nombre, no coordenadas) ──
+  const esMovil = () => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+  const handleObtenerUbicacion = () => {
+    if (!('geolocation' in navigator)) {
+      notify('Tu navegador no soporta geolocalización.');
+      return;
+    }
+    if (!esMovil()) {
+      notify('En PC la ubicación puede ser poco precisa (usa red/WiFi). En celular es más exacta.');
+    }
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        try {
+          const res = await inspectorApi.geocodeReverse(latitude, longitude);
+          if (res.direccion) {
+            setNuevoCliente(prev => ({ ...prev, direccion: res.direccion }));
+            setData({ lat: latitude, lng: longitude });
+          } else {
+            notify(res.error || 'No se pudo obtener la dirección. Escríbela manualmente.');
+          }
+        } catch (e) {
+          console.error('geocode', e);
+          notify('No se pudo obtener la dirección. Escríbela manualmente.');
+        } finally {
+          setGpsLoading(false);
+        }
+      },
+      (err) => {
+        setGpsLoading(false);
+        if (err.code === err.PERMISSION_DENIED) notify('Permiso de ubicación denegado. Habilítalo en el navegador.');
+        else if (err.code === err.TIMEOUT) notify('La ubicación tardó demasiado. Intenta de nuevo.');
+        else notify('No se pudo obtener la ubicación.');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
   };
 
   // ─── Handlers técnicos ───────────────────────────────────────────
@@ -389,6 +431,24 @@ export default function StepInicioInspeccion({ onNext }) {
                   value={nuevoCliente.direccion}
                   onChange={e => setNuevoCliente({ ...nuevoCliente, direccion: e.target.value })}
                 />
+                <button
+                  type="button"
+                  onClick={handleObtenerUbicacion}
+                  disabled={gpsLoading}
+                  title="Usa la ubicación del dispositivo para autocompletar la dirección"
+                  style={{
+                    marginTop: '0.45rem',
+                    background: 'none',
+                    border: '1px dashed var(--border-color)',
+                    borderRadius: '8px',
+                    color: 'var(--text-secondary)',
+                    cursor: gpsLoading ? 'wait' : 'pointer',
+                    padding: '0.45rem 0.9rem',
+                    fontSize: '0.82rem',
+                  }}
+                >
+                  {gpsLoading ? 'Obteniendo ubicación…' : '📍 Obtener ubicación'}
+                </button>
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={labelStyle}>Referencia</label>
