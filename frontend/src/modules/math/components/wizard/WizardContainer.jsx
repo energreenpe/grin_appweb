@@ -8,9 +8,11 @@ import StepTipoSistema from './StepTipoSistema';
 import StepCargasAislado from './aislado/StepCargasAislado';
 import StepSeleccionAislado from './aislado/StepSeleccionAislado';
 import ResultadoAislado from './aislado/ResultadoAislado';
+import StepSeleccionAutoconsumo from './autoconsumo/StepSeleccionAutoconsumo';
+import ResultadoAutoconsumo from './autoconsumo/ResultadoAutoconsumo';
 
 // Arma la `entrada` (JSON) del cálculo aislado desde el estado del store.
-function buildEntrada(data) {
+function buildEntradaAislado(data) {
   return {
     cargas: data.cargas,
     dias_autonomia: data.dias_autonomia,
@@ -22,12 +24,27 @@ function buildEntrada(data) {
   };
 }
 
+// Arma la `entrada` (JSON) del cálculo de autoconsumo.
+function buildEntradaAuto(data) {
+  return {
+    panel_id: data.panel_id,
+    inversor_id: data.inversor_id,
+    consumo_mensual: Number(data.consumo_mensual) || 0,
+    potencia_contratada: Number(data.potencia_contratada) || 0,
+    autarquia: Number(data.autarquia) || 0,
+    tipo_conexion: data.tipo_conexion,
+    voltaje_red: data.voltaje_red,
+    ...(data.opcion_elegida ? { opcion_elegida: data.opcion_elegida } : {}),
+  };
+}
+
 export default function WizardContainer() {
-  const { currentStep, stepHistory, goBack, data, goToStep } = useCalculoStore();
+  const { currentStep, stepHistory, goBack, data, goToStep, readOnly } = useCalculoStore();
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
   const handleNext = async (override = null) => {
+    if (readOnly) return;   // en modo lectura no se guarda ni recalcula
     const current = override || data;
     const nextStep = getNextStep(currentStep, current);
     if (!nextStep) return;
@@ -53,12 +70,13 @@ export default function WizardContainer() {
       } else if (cid) {
         const payload = { paso_actual: nextStep };
         if (currentStep === 'tipo_sistema') payload.tipo_sistema = current.tipo_sistema;
-        if (currentStep === 'cargas' || currentStep === 'seleccion') payload.entrada = buildEntrada(current);
+        if (currentStep === 'cargas' || currentStep === 'seleccion') payload.entrada = buildEntradaAislado(current);
+        if (currentStep === 'seleccion_auto' || currentStep === 'resultado_auto') payload.entrada = buildEntradaAuto(current);
         await mathApi.updateCalculo(cid, payload);
       }
 
-      // Al pasar de "seleccion" a "resultado": ejecutar el motor y persistir el resultado.
-      if (currentStep === 'seleccion' && cid) {
+      // Al pasar de una selección a su resultado: ejecutar el motor y persistir.
+      if ((currentStep === 'seleccion' || currentStep === 'seleccion_auto') && cid) {
         const calc = await mathApi.calcularCalculo(cid);
         store.setData({ resultado: calc.resultado });
       }
@@ -84,9 +102,11 @@ export default function WizardContainer() {
     switch (currentStep) {
       case 'inicio':       return <StepInicioCalculo onNext={handleNext} />;
       case 'tipo_sistema': return <StepTipoSistema onNext={handleNext} />;
-      case 'cargas':       return <StepCargasAislado onNext={handleNext} />;
-      case 'seleccion':    return <StepSeleccionAislado onNext={handleNext} />;
-      case 'resultado':    return <ResultadoAislado onNext={handleNext} />;
+      case 'cargas':          return <StepCargasAislado onNext={handleNext} />;
+      case 'seleccion':       return <StepSeleccionAislado onNext={handleNext} />;
+      case 'resultado':       return <ResultadoAislado onNext={handleNext} readOnly={readOnly} />;
+      case 'seleccion_auto':  return <StepSeleccionAutoconsumo onNext={handleNext} />;
+      case 'resultado_auto':  return <ResultadoAutoconsumo onNext={handleNext} readOnly={readOnly} />;
       case 'done':
         return (
           <div style={{ textAlign: 'center', padding: '3rem' }}>
@@ -118,16 +138,36 @@ export default function WizardContainer() {
             ← Volver
           </button>
         )}
-        {saving && (
+        {!readOnly && saving && (
           <div style={{ position: 'absolute', top: '1rem', right: '1rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Guardando…</div>
         )}
-        <div style={{ marginTop: stepHistory.length > 0 ? '2rem' : '0' }}>
+        {readOnly && (() => {
+          const next = getNextStep(currentStep, data);
+          const canForward = next && next !== 'done';
+          return (
+            <button onClick={() => canForward && goToStep(next)} disabled={!canForward} className="btn"
+              style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'transparent', padding: '0.5rem',
+                color: canForward ? 'var(--text-secondary)' : 'var(--border-color)', cursor: canForward ? 'pointer' : 'default' }}>
+              Siguiente →
+            </button>
+          );
+        })()}
+
+        <div style={{ marginTop: (stepHistory.length > 0 || readOnly) ? '2rem' : '0' }}>
+          {readOnly && (
+            <div style={{ background: 'rgba(98,185,137,0.1)', border: '1px solid rgba(98,185,137,0.3)', borderRadius: '8px', padding: '0.6rem 1rem', color: 'var(--primary-color)', fontSize: '0.85rem', marginBottom: '1rem', textAlign: 'center' }}>
+              🔒 Cálculo completado — modo lectura (recorre los pasos con Volver / Siguiente)
+            </div>
+          )}
           {saveError && (
             <div style={{ background: 'rgba(220,50,50,0.12)', border: '1px solid rgba(220,50,50,0.4)', borderRadius: '8px', padding: '0.75rem 1rem', color: '#ff6b6b', fontSize: '0.9rem', marginBottom: '1rem' }}>
               ⚠️ {saveError}
             </div>
           )}
-          {renderStep()}
+          <fieldset disabled={readOnly}
+            style={{ border: 'none', padding: 0, margin: 0, minInlineSize: 'auto', ...(readOnly ? { pointerEvents: 'none' } : {}) }}>
+            {renderStep()}
+          </fieldset>
         </div>
       </div>
     </div>

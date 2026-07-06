@@ -22,6 +22,15 @@ const initialData = {
   bateria_id: null,
   bateria_info: null,
   voltaje_sistema: null,      // null = automático
+  // Entrada del Autoconsumo (reusa panel_id como panel FV)
+  inversor_id: null,
+  inversor_info: null,
+  tipo_conexion: 'Monofásico',
+  voltaje_red: '220',
+  consumo_mensual: '',        // kWh/mes
+  potencia_contratada: '',    // kW
+  autarquia: 40,              // %
+  opcion_elegida: null,       // "min" | "opt" | "max"
   // Resultado del motor
   resultado: null,
 };
@@ -34,10 +43,12 @@ export const useCalculoStore = create(
       calculoId: null,
       currentStep: 'inicio',
       stepHistory: [],
+      readOnly: false,          // true al ver un cálculo completado (solo lectura)
       data: { ...initialData },
 
       setData: (partial) => set((s) => ({ data: { ...s.data, ...partial } })),
       setCalculoId: (id) => set({ calculoId: id }),
+      setReadOnly: (v) => set({ readOnly: v }),
 
       goToStep: (step) => set((s) => ({
         currentStep: step,
@@ -56,18 +67,20 @@ export const useCalculoStore = create(
         calculoId: null,
         currentStep: 'inicio',
         stepHistory: [],
+        readOnly: false,
         data: { ...initialData },
       }),
     }),
     {
       name: 'math-calculo-storage',
       storage: createJSONStorage(() => localStorage),
-      version: 1,
+      version: 2,
       migrate: (persisted) => {
-        if (!VALID_STEPS.includes(persisted?.currentStep)) {
+        if (!persisted || !VALID_STEPS.includes(persisted.currentStep)) {
           return { calculoId: null, currentStep: 'inicio', stepHistory: [], data: { ...initialData } };
         }
-        return persisted;
+        // Fusiona con initialData para que los campos nuevos tengan defaults.
+        return { ...persisted, data: { ...initialData, ...(persisted.data || {}) } };
       },
     }
   )

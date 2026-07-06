@@ -5,7 +5,7 @@ import { useCalculoStore } from '../../store/calculoStore';
 // Híbrido y Bombeo Solar quedan marcados "En desarrollo".
 const OPCIONES = [
   { id: 'SFV Aislado',     img: '/math/aislado.png',     label: 'SFV Aislado',     activo: true },
-  { id: 'SFV Autoconsumo', img: '/math/autoconsumo.png', label: 'SFV Autoconsumo', activo: false },
+  { id: 'SFV Autoconsumo', img: '/math/autoconsumo.png', label: 'SFV Autoconsumo', activo: true },
   { id: 'SFV Híbrido',     img: '/math/hibrido.png',     label: 'SFV Híbrido',     activo: false },
   { id: 'Bombeo Solar',    img: '/math/bombeo_solar.png', label: 'Bombeo Solar',   activo: false },
 ];

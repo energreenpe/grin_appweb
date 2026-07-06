@@ -12,7 +12,7 @@ function Metric({ label, value, unit, highlight }) {
   );
 }
 
-export default function ResultadoAislado({ onNext }) {
+export default function ResultadoAislado({ onNext, readOnly = false }) {
   const { data } = useCalculoStore();
   const r = data.resultado;
 
@@ -75,9 +75,11 @@ export default function ResultadoAislado({ onNext }) {
         )}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
-        <button className="btn btn-primary" onClick={() => onNext()}>✓ Completar cálculo</button>
-      </div>
+      {!readOnly && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+          <button className="btn btn-primary" onClick={() => onNext()}>✓ Completar cálculo</button>
+        </div>
+      )}
     </div>
   );
 }

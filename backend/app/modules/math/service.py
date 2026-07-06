@@ -13,9 +13,11 @@ from pydantic import ValidationError
 from sqlalchemy import desc
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError
-from app.modules.math import engine_aislado
+from app.modules.math import engine_aislado, engine_autoconsumo
 from app.modules.math.models import Calculo, EquipoTecnico, Region, ElectrodomesticoCatalogo
-from app.modules.math.schemas import AisladoCalcularRequest, CalculoCreate, CalculoUpdate
+from app.modules.math.schemas import (
+    AisladoCalcularRequest, AutoconsumoCalcularRequest, CalculoCreate, CalculoUpdate,
+)
 from app.modules.shared.models import Usuario
 
 
@@ -112,6 +114,46 @@ def calcular_aislado(db: Session, req: AisladoCalcularRequest) -> dict:
         raise HTTPException(status_code=400, detail=str(exc))
 
 
+def calcular_autoconsumo(db: Session, req: AutoconsumoCalcularRequest) -> dict:
+    """Resuelve panel + inversor (autoconsumo) desde la BD y ejecuta el motor puro."""
+    panel = get_equipo(db, req.panel_id, "panel")
+    if not panel:
+        raise HTTPException(status_code=404, detail="Panel no encontrado en el catálogo.")
+    inversor = get_equipo(db, req.inversor_id, "inversor_autoconsumo")
+    if not inversor:
+        raise HTTPException(status_code=404, detail="Inversor de autoconsumo no encontrado en el catálogo.")
+
+    if req.temp_min >= req.temp_max:
+        raise HTTPException(status_code=422, detail="temp_min debe ser menor que temp_max.")
+
+    try:
+        potencia_minima = engine_autoconsumo.potencia_minima_desde_consumo(
+            req.consumo_mensual, req.autarquia)
+        resultado = engine_autoconsumo.calcular_autoconsumo(
+            panel=panel.specs,
+            inversor=inversor.specs,
+            temp_min=req.temp_min,
+            temp_max=req.temp_max,
+            potencia_minima=potencia_minima,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    # Marcar las opciones que exceden la potencia contratada (aviso visual).
+    for opcion in resultado["opciones"]:
+        opcion["excede_contratada"] = opcion["potencia_sistema_kW"] > req.potencia_contratada
+
+    resultado["parametros"] = {
+        "consumo_mensual": req.consumo_mensual,
+        "potencia_contratada": req.potencia_contratada,
+        "autarquia": req.autarquia,
+        "potencia_minima_kw": round(potencia_minima, 2),
+        "tipo_conexion": req.tipo_conexion,
+        "voltaje_red": req.voltaje_red,
+    }
+    return resultado
+
+
 # ── CRUD de Calculo ───────────────────────────────────────────────────────────
 _FK_ERROR = "Cliente o ingeniero inválido: el registro referenciado no existe."
 
@@ -192,6 +234,21 @@ def calcular_y_guardar(db: Session, calculo_id: int) -> Calculo:
             )
         calculo.resultado = calcular_aislado(db, req)
         calculo.paso_actual = "resultado"
+        db.commit()
+        db.refresh(calculo)
+        return calculo
+
+    if calculo.tipo_sistema == "SFV Autoconsumo":
+        try:
+            req = AutoconsumoCalcularRequest(**dict(calculo.entrada or {}))
+        except ValidationError:
+            raise HTTPException(
+                status_code=422,
+                detail="La entrada del cálculo de autoconsumo está incompleta o es inválida "
+                       "(revise el panel y el inversor seleccionados).",
+            )
+        calculo.resultado = calcular_autoconsumo(db, req)
+        calculo.paso_actual = "resultado_auto"
         db.commit()
         db.refresh(calculo)
         return calculo

@@ -9,7 +9,7 @@ export default function CalculoCard({ calculo, onChange }) {
   const { id, nombre_proyecto, cliente, tipo_sistema, tipo_cliente, region, fecha, estado } = calculo;
   const dateObj = new Date(fecha);
   const navigate = useNavigate();
-  const { setCalculoId, setData, resumeAt } = useCalculoStore();
+  const { setCalculoId, setData, resumeAt, setReadOnly } = useCalculoStore();
   const [loading, setLoading] = useState(false);
 
   const abrir = async () => {
@@ -35,11 +35,24 @@ export default function CalculoCard({ calculo, onChange }) {
         bateria_id: entrada.bateria_id || null,
         bateria_info: null,
         voltaje_sistema: entrada.voltaje_sistema || null,
+        // Autoconsumo
+        inversor_id: entrada.inversor_id || null,
+        inversor_info: null,
+        tipo_conexion: entrada.tipo_conexion || 'Monofásico',
+        voltaje_red: entrada.voltaje_red || '220',
+        consumo_mensual: entrada.consumo_mensual ?? '',
+        potencia_contratada: entrada.potencia_contratada ?? '',
+        autarquia: entrada.autarquia ?? 40,
+        opcion_elegida: entrada.opcion_elegida || null,
         resultado: full.resultado || null,
       };
       setCalculoId(full.id);
       setData(mapped);
-      const target = estado === 'completado' ? 'resultado' : (full.paso_actual || 'inicio');
+      // Completado -> modo lectura, aterrizando en el paso de resultado (no en "done").
+      const esCompletado = full.estado === 'completado';
+      const resultStep = full.tipo_sistema === 'SFV Autoconsumo' ? 'resultado_auto' : 'resultado';
+      const target = esCompletado ? resultStep : (full.paso_actual || 'inicio');
+      setReadOnly(esCompletado);
       resumeAt(target, buildHistory(target, mapped));
       navigate('/math/new');
     } catch (err) {

@@ -56,6 +56,14 @@ def calcular_aislado(req: schemas.AisladoCalcularRequest, db: Session = Depends(
     return service.calcular_aislado(db, req)
 
 
+# ── Motor de cálculo: Autoconsumo (stateless) ─────────────────────────────────
+@router.post("/autoconsumo/calcular", response_model=schemas.AutoconsumoResultado)
+def calcular_autoconsumo(req: schemas.AutoconsumoCalcularRequest, db: Session = Depends(get_db)):
+    """Dado un panel y un inversor de autoconsumo, devuelve las 3 configuraciones
+    (mínima/óptima/máxima) por ratio DC/AC. No persiste."""
+    return service.calcular_autoconsumo(db, req)
+
+
 # ── CRUD de Cálculos ──────────────────────────────────────────────────────────
 @router.get("/calculos", response_model=List[schemas.CalculoListItem])
 def listar_calculos(

@@ -109,6 +109,58 @@ class AisladoResultado(BaseModel):
     inversores_sugeridos:       list[InversorSugeridoOut]
 
 
+TipoConexion = Literal["Monofásico", "Trifásico"]
+
+# ── Motor Autoconsumo (grid-tie) ──────────────────────────────────────────────
+class AutoconsumoCalcularRequest(BaseModel):
+    panel_id:            int
+    inversor_id:         int                                  # EquipoTecnico tipo inversor_autoconsumo
+    consumo_mensual:     float = Field(gt=0, le=100_000)      # kWh/mes
+    potencia_contratada: float = Field(ge=0, le=10_000)       # kW
+    autarquia:           float = Field(default=40, ge=0, le=100)   # %
+    tipo_conexion:       Optional[TipoConexion] = None        # informativo / filtro en UI
+    voltaje_red:         Optional[str] = None                 # informativo / filtro en UI ("220"/"380")
+    temp_min:            float = Field(default=-10, ge=-40, le=40)
+    temp_max:            float = Field(default=70, ge=0, le=90)
+
+
+class OpcionAutoconsumo(BaseModel):
+    target:              Literal["min", "opt", "max"]
+    paneles_serie:       int
+    mppt_trackers:       int
+    entradas_por_mppt:   int
+    paneles_total:       int
+    potencia_sistema_kW: float
+    ratio_dc_ac:         float
+    excede_contratada:   bool = False
+
+
+class ParametrosAutoconsumo(BaseModel):
+    consumo_mensual:     float
+    potencia_contratada: float
+    autarquia:           float
+    potencia_minima_kw:  float
+    tipo_conexion:       Optional[str] = None
+    voltaje_red:         Optional[str] = None
+
+
+class PanelResumenAC(BaseModel):
+    descripcion: Optional[str] = None
+    potencia_w:  float
+
+
+class InversorResumenAC(BaseModel):
+    descripcion: Optional[str] = None
+    wout_w:      float
+
+
+class AutoconsumoResultado(BaseModel):
+    panel:      PanelResumenAC
+    inversor:   InversorResumenAC
+    opciones:   list[OpcionAutoconsumo]
+    parametros: ParametrosAutoconsumo
+
+
 # ── Entidad Calculo (CRUD persistido) ─────────────────────────────────────────
 class CalculoCreate(BaseModel):
     nombre_proyecto: str = Field(min_length=1, max_length=255)

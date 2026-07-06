@@ -5,7 +5,7 @@ import { useCalculoStore, VALID_STEPS } from '../store/calculoStore';
 import { mathApi } from '../api/mathApi';
 
 export default function CalculoWizardPage() {
-  const { currentStep, reset, calculoId, data } = useCalculoStore();
+  const { currentStep, reset, calculoId, data, readOnly } = useCalculoStore();
   const navigate = useNavigate();
   const [exiting, setExiting] = useState(false);
 
@@ -57,17 +57,25 @@ export default function CalculoWizardPage() {
   return (
     <div className="animate-fade-in" style={{ padding: '1rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1 style={{ margin: 0, fontSize: '1.8rem' }}>Nuevo Cálculo</h1>
+        <h1 style={{ margin: 0, fontSize: '1.8rem' }}>{readOnly ? 'Ver Cálculo' : 'Nuevo Cálculo'}</h1>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button className="btn btn-secondary" onClick={handleGuardarSalir} disabled={exiting}
-            title="Guarda el progreso y vuelve a la lista; podrás continuar después">
-            {exiting ? 'Guardando…' : '💾 Guardar y salir'}
-          </button>
-          <button className="btn" onClick={handleDescartar} disabled={exiting}
-            style={{ background: 'transparent', color: '#ff6b6b', border: '1px solid rgba(220,50,50,0.4)' }}
-            title="Elimina permanentemente este cálculo">
-            🗑️ Descartar
-          </button>
+          {readOnly ? (
+            <button className="btn btn-secondary" onClick={() => { reset(); navigate('/math'); }}>
+              ← Volver a la lista
+            </button>
+          ) : (
+            <>
+              <button className="btn btn-secondary" onClick={handleGuardarSalir} disabled={exiting}
+                title="Guarda el progreso y vuelve a la lista; podrás continuar después">
+                {exiting ? 'Guardando…' : '💾 Guardar y salir'}
+              </button>
+              <button className="btn" onClick={handleDescartar} disabled={exiting}
+                style={{ background: 'transparent', color: '#ff6b6b', border: '1px solid rgba(220,50,50,0.4)' }}
+                title="Elimina permanentemente este cálculo">
+                🗑️ Descartar
+              </button>
+            </>
+          )}
         </div>
       </div>
 
