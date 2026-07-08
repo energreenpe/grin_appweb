@@ -1,18 +1,67 @@
-# docker-compose — Servicios de infraestructura para desarrollo.
+# docker-compose — Entorno de DESARROLLO completo (db + colas + api + worker + frontend).
 #
-# Servicios de infraestructura para desarrollo:
+# Servicios:
+#   - db:        PostgreSQL (datos persistentes en volumen "postgres_data").
 #   - redis:     cola de tareas pesadas del worker RQ.
 #   - gotenberg: conversión DOCX/XLSX→PDF (incluye LibreOffice dentro del contenedor;
 #                no se instala LibreOffice en el host).
-# El API y el worker se ejecutan localmente como procesos Python durante el
-# desarrollo. La contenerización de API + worker llega en el entregable de hardening.
+#   - api:       FastAPI con hot reload (bind mount + uvicorn --reload).
+#   - worker:    mismo código/imagen que "api" (Dockerfile.dev), otro comando.
+#   - frontend:  Vite dev server con HMR (bind mount + node_modules en volumen anónimo).
+#
+# Bind mount: "./backend:/app" y "./frontend:/app" enlazan tus carpetas locales
+# dentro de cada contenedor. Editas en tu editor de siempre y el cambio se ve al
+# instante (sin reconstruir la imagen). Esto es SOLO para dev — producción usa
+# Dockerfile.api/Dockerfile.worker (código congelado) y Nginx sirviendo el build
+# estático del frontend (ver docker-compose.prod.yml).
+#
+# Redes: dentro de este compose, cada servicio llama a otro por su NOMBRE
+# (api → "db", "redis", "gotenberg"), no por localhost. localhost solo aplica
+# si accedes a un servicio DESDE tu máquina host (por eso los "ports:" abajo).
+#
+# Variables: este archivo lee ./.env (POSTGRES_USER/PASSWORD/DB). Ver .env.example.
+# El resto de config del API/worker (CORS, etc.) la sigue leyendo pydantic-settings
+# desde backend/.env, salvo las 3 variables que se sobreescriben abajo (DATABASE_URL,
+# REDIS_URL, GOTENBERG_URL) porque en backend/.env apuntan a localhost, que solo es
+# válido para procesos que corren FUERA de Docker.
 #
 # Uso:
-#   docker compose up -d redis gotenberg   # levanta ambos en segundo plano
-#   docker compose ps                      # verifica estado
-#   docker compose down                    # detiene (conserva el volumen de datos)
+#   docker compose up -d              # levanta TODO (db, redis, gotenberg, api, worker)
+#   docker compose up -d --build      # reconstruye las imágenes si cambiaste requirements.txt
+#   docker compose logs -f api        # sigue los logs del API en vivo
+#   docker compose ps                 # verifica estado
+#   docker compose down               # detiene (conserva los volúmenes de datos)
 
 services:
+  db:
+    image: postgres:17-alpine
+    container_name: grin_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Adminer: interfaz web para administrar PostgreSQL (reemplazo de pgAdmin).
+  # Solo dev. Abrir en http://localhost:8080 — se conecta al servicio "db".
+  adminer:
+    image: adminer:latest
+    container_name: grin_adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    restart: unless-stopped
+
   redis:
     image: redis:7-alpine
     container_name: grin_redis
@@ -40,5 +89,79 @@ services:
       timeout: 5s
       retries: 5
 
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: grin_api
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+      GOTENBERG_URL: http://gotenberg:3000
+      # Bind mounts en Docker Desktop/Windows no siempre propagan eventos inotify
+      # de forma confiable (ej. un "mv" o un guardado atómico de algunos editores
+      # puede no detectarse). Forzamos que WatchFiles vigile por polling (stat
+      # periódico) en vez de depender de esos eventos: más lento (~1s) pero 100% fiable.
+      WATCHFILES_FORCE_POLLING: "true"
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      gotenberg:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: grin_worker
+    volumes:
+      - ./backend:/app
+    environment:
+      # DATABASE_URL no la usa el worker hoy (ninguna tarea toca la BD), pero
+      # app.config.Settings la exige como campo obligatorio y falla al importar
+      # si no está presente. Se la damos igual que al "api" para que el worker
+      # arranque sin depender de que exista backend/.env (verificado: sin esto,
+      # un dev nuevo que solo sigue el .env.example de la raíz ve el worker
+      # crashear con "database_url: Field required").
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+      GOTENBERG_URL: http://gotenberg:3000
+    command: python -m workers.worker
+    depends_on:
+      redis:
+        condition: service_healthy
+      gotenberg:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: grin_frontend
+    volumes:
+      - ./frontend:/app
+      # Volumen anónimo: evita que el bind mount de arriba pise /app/node_modules
+      # con la carpeta node_modules de tu Windows (binarios nativos incompatibles,
+      # ej. esbuild). El contenedor conserva el node_modules Linux instalado en
+      # el build de la imagen.
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      # Mismo motivo que WATCHFILES_FORCE_POLLING en el api: bind mounts en
+      # Docker Desktop/Windows no siempre disparan eventos de archivo confiables.
+      CHOKIDAR_USEPOLLING: "true"
+    restart: unless-stopped
+
 volumes:
+  postgres_data:
   redis_data:

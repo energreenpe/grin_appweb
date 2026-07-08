@@ -1,0 +1,641 @@
+[
+  {
+    "categoria": "Panel Solar",
+    "nombre": "Panel Solar ECOGREEN EGE-340P-72, 24Vdc 340Wp Policristalino.",
+    "descripcion": "Panel solar policristalino 340Wp",
+    "marca": "Eco Green Energy",
+    "unidad": "Mtr",
+    "precio": 134.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Panel Solar",
+    "nombre": "Estructura en aluminio elevada a 15° para 8 paneles tipo riel 2x4700mm",
+    "descripcion": "Rack aluminio angular regulable 10°-15° L=2x4700mm",
+    "marca": "Nacional",
+    "unidad": "Kg",
+    "precio": 842.6,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Panel Solar",
+    "nombre": "Estructura en aluminio elevada a 15° para 4 paneles tipo riel 1x4700mm",
+    "descripcion": "Rack aluminio angular regulable 10°-15° L=1x4700mm",
+    "marca": "Nacional",
+    "unidad": "Und",
+    "precio": 678.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Panel Solar",
+    "nombre": "Conector MC-4 Hembra + Macho",
+    "descripcion": "Conector PV MC4 simple Macho-Hembra",
+    "marca": "Nacional",
+    "unidad": "Mtr",
+    "precio": 1.8,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Panel Solar",
+    "nombre": "Inversor Solis Ongrid Trifásico S5-GR3P6K Dual 2 MPPT 3/N/PE 380V",
+    "descripcion": "Inversor on-grid trifásico 6kW 380Vac",
+    "marca": "Solis",
+    "unidad": "Kg",
+    "precio": 1324.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Panel Solar",
+    "nombre": "Medidor Trifásico Solis DTSD1352-C-3x1 6A, incluye CT 3P-1(6A)-D-T-(150/5A).",
+    "descripcion": "Smart meter trifásico DTSD1352",
+    "marca": "Acrel",
+    "unidad": "Und",
+    "precio": 167.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Panel Solar",
+    "nombre": "S2-WL-ST Wifi Solis",
+    "descripcion": "Antena WiFi",
+    "marca": "Solis",
+    "unidad": "Mtr",
+    "precio": 64.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Panel Solar",
+    "nombre": "Llave termomagnética DC 2P 20A 550Vdc",
+    "descripcion": "Breaker DC 2P 20A 550Vdc",
+    "marca": "Solis",
+    "unidad": "Kg",
+    "precio": 16.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Panel Solar",
+    "nombre": "Llave termomagnética AC 4P 16A",
+    "descripcion": "Breaker AC 4P 16A 220Vac",
+    "marca": "Solis",
+    "unidad": "Und",
+    "precio": 90.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Llave termomagnética AC 4P 20A",
+    "descripcion": "Breaker AC 4P 20A 220Vac",
+    "marca": "Solis",
+    "unidad": "Mtr",
+    "precio": 95.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Cable Solar FV N2XOH 12AWG Rojo",
+    "descripcion": "Cable solar 12AWG Rojo",
+    "marca": "General",
+    "unidad": "Kg",
+    "precio": 1.8,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Cable Solar FV N2XOH 12AWG Negro",
+    "descripcion": "Cable solar 12AWG Negro",
+    "marca": "General",
+    "unidad": "Und",
+    "precio": 1.8,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Cable NH-80 4mm2, 100mt",
+    "descripcion": "Cable AC 4mm2",
+    "marca": "General",
+    "unidad": "Mtr",
+    "precio": 160.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Cable THW 4mm2, 100mts",
+    "descripcion": "Cable AC 4mm2",
+    "marca": "General",
+    "unidad": "Kg",
+    "precio": 96.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Panel Solar Jinko 555Wp Monofacial",
+    "descripcion": "Panel solar monofacial 555Wp",
+    "marca": "Jinko Solar",
+    "unidad": "Und",
+    "precio": 154.88,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Inversor Solis Monofásico S6-GR1P5K 5.0Kw 2MPPT 1/N/PE 220V",
+    "descripcion": "Inversor on-grid monofásico 5kW 220Vac",
+    "marca": "Solis",
+    "unidad": "Mtr",
+    "precio": 660.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Transformador de corriente CT 4G-CT-10M 100A/33.33mA (inversor monofásico)",
+    "descripcion": "Transformador de corriente 100A/33.33mA",
+    "marca": "Solis",
+    "unidad": "Kg",
+    "precio": 68.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Estructura coplanar para 2 paneles Riel 4900mm",
+    "descripcion": "Rack aluminio coplanar 0° L=2400mm",
+    "marca": "General",
+    "unidad": "Und",
+    "precio": 48.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Estructura coplanar para 4 paneles Riel 4900mm",
+    "descripcion": "Rack aluminio coplanar L=4900mm",
+    "marca": "General",
+    "unidad": "Mtr",
+    "precio": 70.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Batería de Litio Pylontech 48Vdc US5000",
+    "descripcion": "Batería Litio 5kWh / 48Vdc - 100Ah",
+    "marca": "Pylontech",
+    "unidad": "Kg",
+    "precio": 1913.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Cables para baterías Pylontech",
+    "descripcion": "Cable poder batería litio 25mm2",
+    "marca": "Pylontech",
+    "unidad": "Und",
+    "precio": 28.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Cable Solar FV 6mm2 Negro",
+    "descripcion": "Cable solar 6mm2 Negro",
+    "marca": "General",
+    "unidad": "Mtr",
+    "precio": 1.12,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Cable Solar FV 6mm2 Rojo",
+    "descripcion": "Cable solar 6mm2 Rojo",
+    "marca": "General",
+    "unidad": "Kg",
+    "precio": 1.12,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Inversor Solis Híbrido Monofásico S5-EH1P5K-L 5.0Kw 48Vdc 2MPPT 1/N/PE 220V",
+    "descripcion": "Inversor híbrido monofásico 5kW 48Vdc-220Vac",
+    "marca": "Solis",
+    "unidad": "Und",
+    "precio": 1960.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Inversor Solis Ongrid Monofásico Mini-700 S6-GR1P0.7K-M 0.7Kw 1MPPT 1/N/PE 220V",
+    "descripcion": "Inversor on-grid monofásico 0.7kW 220Vac",
+    "marca": "Solis",
+    "unidad": "Mtr",
+    "precio": 318.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Datalogger Solis S2-WL-ST Wifi/Lan Stick",
+    "descripcion": "Antena WiFi/WLAN",
+    "marca": "Solis",
+    "unidad": "Kg",
+    "precio": 50.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Inversor Solis Trifásico S5-GR3P10K-LV 10.0KW 220V.",
+    "descripcion": "Inversor on-grid trifásico 10kW 220Vac",
+    "marca": "Solis",
+    "unidad": "Und",
+    "precio": 1964.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "S2-WL-ST Wifi/Lan Stick",
+    "descripcion": "Antena WiFi/WLAN",
+    "marca": "Solis",
+    "unidad": "Mtr",
+    "precio": 48.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Inversor Solis Trifásico S5-GC15K-LV 15.0Kw 220V.",
+    "descripcion": "Inversor on-grid trifásico 15kW 220Vac",
+    "marca": "Solis",
+    "unidad": "Kg",
+    "precio": 2191.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Solis Export Power Manager Trifásico EPM3-5G",
+    "descripcion": "Meter zero export trifásico EPM",
+    "marca": "Solis",
+    "unidad": "Und",
+    "precio": 450.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "Solis Export Power Manager Trifásico EPM3-5G-Plus",
+    "descripcion": "Variador solar",
+    "marca": "Solis",
+    "unidad": "Mtr",
+    "precio": 608.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "MOVITRAC MCLTEB0110-5A3-4-00 18262112 Bombeo solar",
+    "descripcion": "Variador solar",
+    "marca": "Sew Eurodrive",
+    "unidad": "Kg",
+    "precio": 2829.0,
+    "moneda": "PEN"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "MOVITRAC MCLTEB0015-5A3-1-00 18261825 Bombeo solar",
+    "descripcion": "Variador solar",
+    "marca": "Sew Eurodrive",
+    "unidad": "Und",
+    "precio": 1031.0,
+    "moneda": "PEN"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "MOVITRAC MCLTEB0040-5A3-4-00 18262007 Bombeo solar",
+    "descripcion": "Variador solar",
+    "marca": "Sew Eurodrive",
+    "unidad": "Mtr",
+    "precio": 1416.0,
+    "moneda": "PEN"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "MOVITRAC MCLTPB0300-5A3-4-10 18252125 Bombeo solar",
+    "descripcion": "Variador solar",
+    "marca": "Sew Eurodrive",
+    "unidad": "Kg",
+    "precio": 8469.0,
+    "moneda": "PEN"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "MOVITRAC MCLTPB0370-5A3-4-10 18252168 Bombeo solar",
+    "descripcion": "Variador solar",
+    "marca": "Sew Eurodrive",
+    "unidad": "Und",
+    "precio": 9676.0,
+    "moneda": "PEN"
+  },
+  {
+    "categoria": "Inversor autoconsumo",
+    "nombre": "MOVITRAC MCLTPB0550-5A3-4-10 18252214 Bombeo solar",
+    "descripcion": "Variador solar",
+    "marca": "Sew Eurodrive",
+    "unidad": "Mtr",
+    "precio": 13891.0,
+    "moneda": "PEN"
+  },
+  {
+    "categoria": "Inversor aislado",
+    "nombre": "AIRE ACONDICIONADO SOLAR 12MIL BTU BONA",
+    "descripcion": "Aire acondicionado DC 12000BTU",
+    "marca": "Bona",
+    "unidad": "Kg",
+    "precio": 2755.0,
+    "moneda": "PEN"
+  },
+  {
+    "categoria": "Inversor aislado",
+    "nombre": "PANEL SOLAR 400W MONOCRISTALINO SUNSHINE SOLAR",
+    "descripcion": "Panel solar monocristalino 400Wp",
+    "marca": "Sunshine Solar",
+    "unidad": "Und",
+    "precio": 520.0,
+    "moneda": "PEN"
+  },
+  {
+    "categoria": "Inversor aislado",
+    "nombre": "ESCALERA DIELEC.TELESC.FIBRA DE VIDRIO136kg 32PASOS AMARILLO ANSI14.5",
+    "descripcion": "Escalera telescópica dieléctrica 32 pasos",
+    "marca": "Ralux",
+    "unidad": "Mtr",
+    "precio": 374.34,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor aislado",
+    "nombre": "ESCALERA DIELEC.T/TIJERA DOBLE ACC.FIB.VIDRIO136kg 8 PASOS AMARILLO ANSI14.5",
+    "descripcion": "Escalera tijera doble dieléctrica 8 pasos",
+    "marca": "Ralux",
+    "unidad": "Kg",
+    "precio": 215.68,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor aislado",
+    "nombre": "ESCALERA DIELEC.T/TIJERA DOBLE ACC.FIB.VIDRIO136kg 12 PASOS AMARILLO ANSI14.5",
+    "descripcion": "Escalera tijera doble dieléctrica 12 pasos",
+    "marca": "Ralux",
+    "unidad": "Und",
+    "precio": 355.9,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor aislado",
+    "nombre": "ESCALERA TIJERA DOBLE DE 8 PASOS DE ALUMINIO TIPO I C.C.114KG",
+    "descripcion": "Escalera tijera doble aluminio 8 pasos",
+    "marca": "Ralux",
+    "unidad": "Mtr",
+    "precio": 220.36,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Inversor aislado",
+    "nombre": "ESCALERA TIJERA DOBLE DE 12 PASOS DE ALUMINIO TIPO I C.C.114KG",
+    "descripcion": "Escaleras tijera doble aluminio 12 pasos",
+    "marca": "Ralux",
+    "unidad": "Kg",
+    "precio": 337.62,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "Mini rail_40cm_anodizado_perforado_3M epdm_4 tornilos epdm",
+    "descripcion": "Mini riel aluminio 40cm",
+    "marca": "Ralux",
+    "unidad": "Und",
+    "precio": 342.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "Zeta clamp + pin_Ralux_anodizado_30mm/35mm",
+    "descripcion": "End clamp aluminio",
+    "marca": "Ralux",
+    "unidad": "Mtr",
+    "precio": 28.8,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "Omega clamp + pin_Ralux_anodizado_25-45mm",
+    "descripcion": "Mid clamp aluminio",
+    "marca": "Ralux",
+    "unidad": "Kg",
+    "precio": 57.6,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "Grounding lug_anodizado",
+    "descripcion": "Grounding lug aluminio",
+    "marca": "Ralux",
+    "unidad": "Und",
+    "precio": 7.2,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "INVERSOR TIPO HIBRIDO 3KW MONOFASICO , 220 VAC",
+    "descripcion": "Inversor híbrido monofásico 3kW 48Vdc-220Vac",
+    "marca": "Livoltek",
+    "unidad": "Mtr",
+    "precio": 915.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "INVERSOR TIPO HIBRIDO 5KW MONOFASICO, 220 VAC,CON WIF",
+    "descripcion": "Inversor híbrido monofásico 5kW 48Vdc-220Vac",
+    "marca": "Livoltek",
+    "unidad": "Kg",
+    "precio": 992.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "COBERTURA DE CAJA DE CONEXIONES DE SISTEMA ALL-IN-ONE",
+    "descripcion": "Inversor híbrido monofásico 5kW 48Vdc-220Vac",
+    "marca": "Livoltek",
+    "unidad": "Und",
+    "precio": 119.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "BATERIA LI-ION LV 5.12KW , 51.2 V, 100AH, IP 65 MARCA LIVOLTEK",
+    "descripcion": "Batería Litio 5kWh / 48Vdc - 100Ah",
+    "marca": "Livoltek",
+    "unidad": "Mtr",
+    "precio": 1178.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "AUTOTRANSFORMADOR PARA INVERSOR ALL IN ONE",
+    "descripcion": "Autotransformador",
+    "marca": "Livoltek",
+    "unidad": "Kg",
+    "precio": 360.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "INVERSOR TIPO HIBRIDO 5KW MONOFASICO, 220 VAC,CON WIFI , SMART METER",
+    "descripcion": "Inversor híbrido monofásico 5kW 48Vdc-220Vac",
+    "marca": "Livoltek",
+    "unidad": "Und",
+    "precio": 992.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "BATERIA LI-ION LV 5.12KW , 51.2 V, 100AH, IP 65 MARCA LIVOLTEK",
+    "descripcion": "Batería Litio 5kWh / 48Vdc - 100Ah",
+    "marca": "Livoltek",
+    "unidad": "Mtr",
+    "precio": 1178.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "COBERTURA DE CAJA DE CONEXIONES DE SISTEMA ALL-IN-ONE",
+    "descripcion": "Batería Litio 5kWh / 48Vdc - 100Ah",
+    "marca": "Livoltek",
+    "unidad": "Kg",
+    "precio": 119.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "Inversor Solis Trifásico S5-GR3P6K-LV 6.0KW 220V.",
+    "descripcion": "Inversor on-grid trifásico 6kW 220Vac",
+    "marca": "Solis",
+    "unidad": "Und",
+    "precio": 1739.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "Medidor Trifásico Solis DTSD1352-C-3x1 6A, incluye CT 3P-1(6A)-D-T-(150/5).",
+    "descripcion": "Smart meter trifásico DTSD1352",
+    "marca": "Acrel",
+    "unidad": "Mtr",
+    "precio": 170.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "Inversor Solis Off Grid Monofásico S5-EO1P5K-48 P 5.0Kw 48V 1MPPT 1/N/PE 220V",
+    "descripcion": "Inversor off-grid monofásico 5kW 48Vdc-220Vac",
+    "marca": "Solis",
+    "unidad": "Kg",
+    "precio": 690.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "Ct clamp 300/5A",
+    "descripcion": "Transformador de corriente 300/5A",
+    "marca": "Acrel",
+    "unidad": "Und",
+    "precio": 204.8,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "Ct clamp 600/5A",
+    "descripcion": "Transformador de corriente 600/5A",
+    "marca": "Acrel",
+    "unidad": "Mtr",
+    "precio": 232.2,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "Ct clamp 1000/5A",
+    "descripcion": "Transformador de corriente 1000/5A",
+    "marca": "Acrel",
+    "unidad": "Kg",
+    "precio": 235.8,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "Inversor Solis Trifásico S5-GR3P10K-LV 10.0KW 220V.",
+    "descripcion": "Inversor on-grid trifásico 10kW 220Vac",
+    "marca": "Solis",
+    "unidad": "Und",
+    "precio": 1831.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "Solis Export Power Manager Trifásico EPM3-5G",
+    "descripcion": "Meter zero export trifásico EPM",
+    "marca": "Solis",
+    "unidad": "Mtr",
+    "precio": 450.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "Solis Export Power Manager Trifásico EPM3-5G-Plus",
+    "descripcion": "Meter zero export trifásico EPM-Plus",
+    "marca": "Solis",
+    "unidad": "Kg",
+    "precio": 608.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "Inversor Solis Ongrid Monofásico Mini-700 S6-GR190.7K-M 0.7Kw 1MPPT 1/N/PE 220V",
+    "descripcion": "Inversor on-grid monofásico 0.7kW 220Vac",
+    "marca": "Solis",
+    "unidad": "Und",
+    "precio": 339.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Baterías",
+    "nombre": "Dyness LFP 48V 100Ah [A48100]",
+    "descripcion": "Inversor on-grid monofásico 1.5kW 220Vac",
+    "marca": "Solis",
+    "unidad": "Mtr",
+    "precio": 375.0,
+    "moneda": "USD"
+  },
+  {
+    "categoria": "Paneles Solares",
+    "nombre": "Astronergy monofacial 580Wp [ASTRO N5 CHSM72N(DG)/F-HC-580]",
+    "descripcion": "Astronergy monofacial 580Wp",
+    "marca": "Astronergy",
+    "unidad": "Und",
+    "precio": 580.0,
+    "moneda": "PEN"
+  },
+  {
+    "categoria": "Inversores",
+    "nombre": "Goodwe monofásico 3kW [GW3000-XS-11]",
+    "descripcion": "Goodwe monofásico 3kW",
+    "marca": "Goodwe",
+    "unidad": "Und",
+    "precio": 90.0,
+    "moneda": "PEN"
+  },
+  {
+    "categoria": "Inversores",
+    "nombre": "Huawei trifásico 20kW [SUN2000-20KTL-M3]",
+    "descripcion": "Huawei trifásico 20kW",
+    "marca": "Huawei",
+    "unidad": "Und",
+    "precio": 80.0,
+    "moneda": "PEN"
+  },
+  {
+    "categoria": "Panel Solar",
+    "nombre": "Panel solar eco green",
+    "descripcion": "descropcion",
+    "marca": "eco",
+    "unidad": "Und",
+    "precio": 40.0,
+    "moneda": "USD"
+  }
+]

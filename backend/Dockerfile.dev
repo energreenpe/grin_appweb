@@ -1,0 +1,17 @@
+# Dockerfile.dev — Imagen de DESARROLLO compartida por "api" y "worker".
+#
+# El código NO se copia aquí (a diferencia de Dockerfile.api/Dockerfile.worker,
+# que sí lo copian y lo dejan congelado). En dev, docker-compose.yml monta
+# "./backend:/app" como bind mount: editas en tu editor de siempre y el cambio
+# se ve al instante dentro del contenedor. El comando real (uvicorn --reload
+# para api, "python -m workers.worker" para worker) se define por servicio
+# en docker-compose.yml mediante "command:", así que aquí no hay CMD fijo.
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt requirements-dev.txt ./
+RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt

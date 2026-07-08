@@ -105,4 +105,7 @@ $RECYCLE.BIN/
 *~
 
 # ─── ARCHIVOS SUBIDOS (UPLOADS) ──────────────────────────────
-backend/uploads/
+# La carpeta debe existir siempre (app/main.py monta StaticFiles sobre ella al
+# arrancar y falla si no existe) — se ignora el CONTENIDO, no la carpeta.
+backend/uploads/*
+!backend/uploads/.gitkeep

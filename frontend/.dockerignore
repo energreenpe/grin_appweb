@@ -1,0 +1,5 @@
+# Excluye del contexto de build de Docker lo que no debe ir en la imagen.
+node_modules/
+dist/
+.git/
+*.log

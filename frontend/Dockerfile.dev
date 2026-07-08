@@ -1,0 +1,22 @@
+# Dockerfile.dev — Servidor de desarrollo Vite con hot reload.
+#
+# El código NO se copia aquí: docker-compose.yml monta "./frontend:/app" como
+# bind mount (editas en tu editor de siempre, el cambio se ve al instante).
+# "node_modules" NO viaja por el bind mount: docker-compose.yml define un volumen
+# anónimo sobre /app/node_modules para que el contenedor use SIEMPRE los binarios
+# Linux instalados aquí (ej. esbuild) y no los de Windows que trae tu carpeta local.
+#
+# Producción (fuera del alcance de este archivo): se compila con "npm run build"
+# y los estáticos resultantes los sirve Nginx — no el servidor dev de Vite.
+FROM node:22-alpine
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+EXPOSE 5173
+
+# --host 0.0.0.0: sin esto, Vite solo escucha en localhost DENTRO del contenedor
+# y no sería alcanzable desde tu navegador en el host.
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
