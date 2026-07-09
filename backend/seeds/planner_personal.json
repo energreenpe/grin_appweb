@@ -1,0 +1,8 @@
+[
+  {"nombre": "Carlos Vargas", "dni": "47111111", "celular": "944 111 222", "profesion": "Técnico Electricista"},
+  {"nombre": "Maria Lopez", "dni": "48222222", "celular": "944 333 444", "profesion": "Instalador de Paneles Solares"},
+  {"nombre": "Jose Ramirez", "dni": "49333333", "celular": "944 555 666", "profesion": "Operario de Montaje"},
+  {"nombre": "Ana Paredes", "dni": "50444444", "celular": "944 777 888", "profesion": "Supervisor de Obra"},
+  {"nombre": "Luis Mendoza", "dni": "51555555", "celular": "944 999 000", "profesion": "Instalador Eléctrico"},
+  {"nombre": "Ricardo Morales", "dni": "52666666", "celular": "945 111 222", "profesion": "Ingeniero Eléctrico"}
+]

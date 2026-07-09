@@ -1,0 +1,5 @@
+[
+  {"nombre": "Javier Viera", "correo": "javierviera@gmail.com", "telefono": "987654321", "rol": "vendedor"},
+  {"nombre": "Anel Enmita", "correo": "anelenmita@gmail.com", "telefono": "987654321", "rol": "tecnico"},
+  {"nombre": "Daniel Parrilla", "correo": "energreenpe@gmail.com", "telefono": "945486818", "rol": "ingeniero"}
+]

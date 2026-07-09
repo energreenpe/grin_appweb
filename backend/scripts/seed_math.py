@@ -1,11 +1,13 @@
 """
-seed_math.py — Carga los catálogos del módulo MATH y un usuario ingeniero.
+seed_math.py — Carga los catálogos del módulo MATH.
 
-Lee los JSON de backend/seeds/ (copiados del sistema legacy) y siembra:
-  - equipos_tecnicos      (paneles, baterías, inversores aislados y de autoconsumo)
-  - regiones              (con HSP mínimo/promedio/mayor)
+Lee los JSON de backend/seeds/ y siembra:
+  - equipos_tecnicos           (paneles, baterías, inversores aislados y de autoconsumo)
+  - regiones                   (con HSP mínimo/promedio/mayor)
   - electrodomesticos_catalogo (potencias base)
-  - usuarios              (ingeniero responsable)
+
+El usuario ingeniero de prueba vive en seed_usuarios.py (Daniel Parrilla ya
+cubre el rol "ingeniero") — no se duplica aquí.
 
 Es IDEMPOTENTE: puede correrse varias veces sin duplicar (actualiza si ya existe).
 
@@ -20,40 +22,15 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app.db import SessionLocal  # noqa: E402
+# Necesario aunque no se use directo: registra DatosCliente/Usuario en el
+# mapper de SQLAlchemy, que Calculo (math/models.py) referencia por nombre de
+# cadena ("DatosCliente") en su relationship(). Mismo motivo que en alembic/env.py.
+from app.modules.shared import models as shared_models  # noqa: F401,E402
 from app.modules.math.models import (  # noqa: E402
     EquipoTecnico, Region, ElectrodomesticoCatalogo,
 )
-from app.modules.shared.models import Usuario  # noqa: E402
 
 SEEDS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "seeds"))
-
-# Potencias base de electrodomésticos (W). Copiado de
-# MATH/models/electrodomestico_model.py::POTENCIAS. Las variantes (focos LED vs
-# incandescente, aire acondicionado por BTU) las resuelve el motor, no el catálogo.
-POTENCIAS = {
-    "PC": 150, "FOCO DORMITORIO": 10, "CELULAR": 15, "LAMPARA": 20,
-    "VENTILADOR": 50, "REFRIGERADORA": 300, "MICROONDAS": 1100,
-    "OLLA ARROCERA": 1000, "THERMA ELECTRICA": 1500, "COCINA ELECTRICA": 4500,
-    "LICUADORA": 600, "TV LED": 120, "LAPTOP": 150, "REPRODUCTOR DVD": 20,
-    "EQUIPO DE SONIDO": 30, "FOCO SALA": 100, "CALENTADOR ELECTRICO": 1500,
-    "DUCHA ELECTRICA": 4000, "SECADORA DE CABELLO": 1200, "FOCO BAÑO": 10,
-    "ASPIRADORA": 1400, "PLANCHA DE ROPA": 1000, "SECADORA DE ROPA": 2500,
-    "LAVADORA": 500, "FOCO LAVANDERIA": 20, "LAMPARA SALA": 20, "BATIDORA": 1200,
-    "WAFLERA": 1300, "FOCO COCINA": 10, "ELECTRO BOMBA": 13000, "FLUORESCENTE": 40,
-    "REFLECTOR LED": 150, "HERVIDOR ELECTRICO": 1500, "LUSTRADORA": 600,
-    "RADIOGRABADORA": 30, "CONGELADORA": 600, "TURBO CARGADOR CELULAR": 160,
-    "MODEM INTERNET": 30, "DECODIFICADOR TV": 43.4, "LECTOR DE HUELLAS": 200,
-    "CAMARA DE VIGILANCIA": 7, "MOTOR MONOFASICO": 2200, "TOMACORRIENTES": 30,
-}
-
-# Ingeniero responsable a sembrar (rol="ingeniero").
-INGENIERO = {
-    "nombre": "Luis Parrilla",
-    "correo": "luis@gmail.com",
-    "telefono": "987654321",
-    "rol": "ingeniero",
-    "activo": True,
-}
 
 
 def _load(name):
@@ -116,26 +93,16 @@ def seed_regiones(db):
 
 
 def seed_electrodomesticos(db):
-    for nombre, potencia in POTENCIAS.items():
-        item = db.query(ElectrodomesticoCatalogo).filter_by(nombre=nombre).first()
-        if item:
-            item.potencia_w = potencia
+    data = _load("electrodomesticos.json")
+    for item in data:
+        nombre = item["nombre"]
+        potencia = item["potencia_w"]
+        equipo = db.query(ElectrodomesticoCatalogo).filter_by(nombre=nombre).first()
+        if equipo:
+            equipo.potencia_w = potencia
         else:
             db.add(ElectrodomesticoCatalogo(nombre=nombre, potencia_w=potencia))
-    print(f"  electrodomesticos_catalogo: {len(POTENCIAS)} registros procesados")
-
-
-def seed_ingeniero(db):
-    usuario = db.query(Usuario).filter_by(correo=INGENIERO["correo"]).first()
-    if usuario:
-        usuario.nombre = INGENIERO["nombre"]
-        usuario.telefono = INGENIERO["telefono"]
-        usuario.rol = INGENIERO["rol"]
-        usuario.activo = INGENIERO["activo"]
-        print(f"  usuario ingeniero actualizado: {INGENIERO['nombre']}")
-    else:
-        db.add(Usuario(**INGENIERO))
-        print(f"  usuario ingeniero creado: {INGENIERO['nombre']}")
+    print(f"  electrodomesticos_catalogo: {len(data)} registros procesados")
 
 
 def main():
@@ -145,7 +112,6 @@ def main():
         seed_equipos(db)
         seed_regiones(db)
         seed_electrodomesticos(db)
-        seed_ingeniero(db)
         db.commit()
         print("Seed MATH completado correctamente.")
     except Exception:

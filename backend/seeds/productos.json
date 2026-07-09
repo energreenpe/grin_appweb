@@ -37,24 +37,6 @@
   },
   {
     "categoria": "Panel Solar",
-    "nombre": "Inversor Solis Ongrid Trifásico S5-GR3P6K Dual 2 MPPT 3/N/PE 380V",
-    "descripcion": "Inversor on-grid trifásico 6kW 380Vac",
-    "marca": "Solis",
-    "unidad": "Kg",
-    "precio": 1324.0,
-    "moneda": "USD"
-  },
-  {
-    "categoria": "Panel Solar",
-    "nombre": "Medidor Trifásico Solis DTSD1352-C-3x1 6A, incluye CT 3P-1(6A)-D-T-(150/5A).",
-    "descripcion": "Smart meter trifásico DTSD1352",
-    "marca": "Acrel",
-    "unidad": "Und",
-    "precio": 167.0,
-    "moneda": "USD"
-  },
-  {
-    "categoria": "Panel Solar",
     "nombre": "S2-WL-ST Wifi Solis",
     "descripcion": "Antena WiFi",
     "marca": "Solis",
@@ -234,12 +216,12 @@
     "moneda": "USD"
   },
   {
-    "categoria": "Inversor autoconsumo",
+    "categoria": "Baterías",
     "nombre": "Inversor Solis Trifásico S5-GR3P10K-LV 10.0KW 220V.",
     "descripcion": "Inversor on-grid trifásico 10kW 220Vac",
     "marca": "Solis",
     "unidad": "Und",
-    "precio": 1964.0,
+    "precio": 1831.0,
     "moneda": "USD"
   },
   {
@@ -261,20 +243,20 @@
     "moneda": "USD"
   },
   {
-    "categoria": "Inversor autoconsumo",
+    "categoria": "Baterías",
     "nombre": "Solis Export Power Manager Trifásico EPM3-5G",
     "descripcion": "Meter zero export trifásico EPM",
     "marca": "Solis",
-    "unidad": "Und",
+    "unidad": "Mtr",
     "precio": 450.0,
     "moneda": "USD"
   },
   {
-    "categoria": "Inversor autoconsumo",
+    "categoria": "Baterías",
     "nombre": "Solis Export Power Manager Trifásico EPM3-5G-Plus",
-    "descripcion": "Variador solar",
+    "descripcion": "Meter zero export trifásico EPM-Plus",
     "marca": "Solis",
-    "unidad": "Mtr",
+    "unidad": "Kg",
     "precio": 608.0,
     "moneda": "USD"
   },
@@ -452,9 +434,9 @@
   {
     "categoria": "Baterías",
     "nombre": "COBERTURA DE CAJA DE CONEXIONES DE SISTEMA ALL-IN-ONE",
-    "descripcion": "Inversor híbrido monofásico 5kW 48Vdc-220Vac",
+    "descripcion": "Batería Litio 5kWh / 48Vdc - 100Ah",
     "marca": "Livoltek",
-    "unidad": "Und",
+    "unidad": "Kg",
     "precio": 119.0,
     "moneda": "USD"
   },
@@ -483,24 +465,6 @@
     "marca": "Livoltek",
     "unidad": "Und",
     "precio": 992.0,
-    "moneda": "USD"
-  },
-  {
-    "categoria": "Baterías",
-    "nombre": "BATERIA LI-ION LV 5.12KW , 51.2 V, 100AH, IP 65 MARCA LIVOLTEK",
-    "descripcion": "Batería Litio 5kWh / 48Vdc - 100Ah",
-    "marca": "Livoltek",
-    "unidad": "Mtr",
-    "precio": 1178.0,
-    "moneda": "USD"
-  },
-  {
-    "categoria": "Baterías",
-    "nombre": "COBERTURA DE CAJA DE CONEXIONES DE SISTEMA ALL-IN-ONE",
-    "descripcion": "Batería Litio 5kWh / 48Vdc - 100Ah",
-    "marca": "Livoltek",
-    "unidad": "Kg",
-    "precio": 119.0,
     "moneda": "USD"
   },
   {
@@ -559,33 +523,6 @@
   },
   {
     "categoria": "Baterías",
-    "nombre": "Inversor Solis Trifásico S5-GR3P10K-LV 10.0KW 220V.",
-    "descripcion": "Inversor on-grid trifásico 10kW 220Vac",
-    "marca": "Solis",
-    "unidad": "Und",
-    "precio": 1831.0,
-    "moneda": "USD"
-  },
-  {
-    "categoria": "Baterías",
-    "nombre": "Solis Export Power Manager Trifásico EPM3-5G",
-    "descripcion": "Meter zero export trifásico EPM",
-    "marca": "Solis",
-    "unidad": "Mtr",
-    "precio": 450.0,
-    "moneda": "USD"
-  },
-  {
-    "categoria": "Baterías",
-    "nombre": "Solis Export Power Manager Trifásico EPM3-5G-Plus",
-    "descripcion": "Meter zero export trifásico EPM-Plus",
-    "marca": "Solis",
-    "unidad": "Kg",
-    "precio": 608.0,
-    "moneda": "USD"
-  },
-  {
-    "categoria": "Baterías",
     "nombre": "Inversor Solis Ongrid Monofásico Mini-700 S6-GR190.7K-M 0.7Kw 1MPPT 1/N/PE 220V",
     "descripcion": "Inversor on-grid monofásico 0.7kW 220Vac",
     "marca": "Solis",
@@ -628,14 +565,5 @@
     "unidad": "Und",
     "precio": 80.0,
     "moneda": "PEN"
-  },
-  {
-    "categoria": "Panel Solar",
-    "nombre": "Panel solar eco green",
-    "descripcion": "descropcion",
-    "marca": "eco",
-    "unidad": "Und",
-    "precio": 40.0,
-    "moneda": "USD"
   }
 ]
