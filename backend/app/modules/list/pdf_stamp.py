@@ -55,6 +55,47 @@ def _xml_escape(text: str) -> str:
     )
 
 
+# Formas normalizadas (fracción 0..1 del ancho/alto del cuadro, origen abajo-
+# izquierda) para check (✔) y aspa (✘). El bullet (•) es un círculo relleno,
+# no necesita puntos. Se dibujan a mano en vez de usar los glifos Unicode
+# ✔/✘/• porque las fuentes estándar de PDF (Helvetica/Times/Courier) no los
+# incluyen — así se ven igual en cualquier lector, sin depender de la fuente.
+_CHECK_POINTS = [(0.12, 0.5), (0.4, 0.18), (0.9, 0.8)]
+_CROSS_LINES = [
+    ((0.15, 0.15), (0.85, 0.85)),
+    ((0.15, 0.85), (0.85, 0.15)),
+]
+
+
+def _draw_symbol(c, symbol: str, left: float, y_bottom: float, cw: float, ch: float,
+                  color: Color, font_size: int) -> None:
+    """Dibuja un símbolo vectorial (check/cross/bullet) centrado en el rect dado."""
+    line_width = max(1.2, min(font_size * 0.14, min(cw, ch) * 0.22))
+    c.setStrokeColor(color)
+    c.setFillColor(color)
+    c.setLineWidth(line_width)
+    c.setLineCap(1)   # extremos redondeados
+    c.setLineJoin(1)  # uniones redondeadas
+
+    if symbol == "bullet":
+        radius = min(cw, ch) * 0.28
+        c.circle(left + cw / 2, y_bottom + ch / 2, radius, fill=1, stroke=0)
+        return
+
+    if symbol == "check":
+        path = c.beginPath()
+        path.moveTo(left + cw * _CHECK_POINTS[0][0], y_bottom + ch * _CHECK_POINTS[0][1])
+        for fx, fy in _CHECK_POINTS[1:]:
+            path.lineTo(left + cw * fx, y_bottom + ch * fy)
+        c.drawPath(path, stroke=1, fill=0)
+        return
+
+    if symbol == "cross":
+        for (x0, y0), (x1, y1) in _CROSS_LINES:
+            c.line(left + cw * x0, y_bottom + ch * y0, left + cw * x1, y_bottom + ch * y1)
+        return
+
+
 def _rect_bottomleft(el: dict, page_w: float, page_h: float) -> Tuple[float, float, float, float]:
     """Convierte un rect en coords top-left (x,y,width,height) a reportlab
     (left, y_bottom, width, height), recortado a los límites de la página."""
@@ -112,6 +153,15 @@ def stamp_pdf(source_bytes: bytes, fields: List[dict], overlays: List[dict]) -> 
                 c.setFillColor(bg)
                 c.setStrokeColor(bg)
                 c.rect(left, y_bottom, cw, ch, fill=1, stroke=0)
+
+            symbol = f.get("symbol")
+            if symbol in ("check", "cross", "bullet"):
+                _draw_symbol(
+                    c, symbol, left, y_bottom, cw, ch,
+                    _color(f.get("font_color") or [0.0, 0.0, 0.0]),
+                    int(f.get("font_size", 12)),
+                )
+                continue
 
             text = f.get("text") or ""
             if not text:

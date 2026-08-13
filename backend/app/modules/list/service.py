@@ -7,7 +7,6 @@ Orquesta la conversión SIN ejecutar nada pesado en el proceso web:
 - `estado_job`: consulta el estado/resultado de un job en RQ (polling del frontend).
 
 La tarea se encola por RUTA de string para que `app/` no importe `workers/`.
-El CRUD de plantillas (`list_plantillas`) llega en el entregable #5.
 
 Convención (como MATH): se lanza `HTTPException` directo ante errores de negocio.
 """
@@ -24,9 +23,9 @@ from sqlalchemy.orm import Session
 
 from app import storage
 from app.queue import QUEUE_CONVERSION, QUEUE_EXPORT, get_queue, get_redis
-from app.modules.list.models import ListDocumento, ListPlantilla
+from app.modules.list.models import ListDocumento
 from app.modules.list.schemas import (
-    ExportPayload, ListPlantillaCreate, ListDocumentoCreate, ListDocumentoUpdate,
+    ExportPayload, ListDocumentoCreate, ListDocumentoUpdate,
 )
 
 # Tareas encolables (rutas de import resueltas por el worker).
@@ -131,47 +130,6 @@ def procesar_export(payload: ExportPayload) -> dict:
 
     job = get_queue(QUEUE_EXPORT).enqueue(_EXPORT_TASK, payload.pdf_name, fields, overlays)
     return {"job_id": job.id, "status": "queued"}
-
-
-# ── CRUD de plantillas (PostgreSQL, tabla list_plantillas) ──────────────────────
-def crear_plantilla(db: Session, data: ListPlantillaCreate) -> ListPlantilla:
-    plantilla = ListPlantilla(
-        nombre=data.nombre,
-        pdf_name=data.pdf_name,
-        fields=[f.model_dump() for f in data.fields],
-        overlays=[o.model_dump() for o in data.overlays],
-    )
-    db.add(plantilla)
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(status_code=400, detail="No se pudo crear la plantilla.")
-    db.refresh(plantilla)
-    return plantilla
-
-
-def listar_plantillas(db: Session, skip: int = 0, limit: int = 100):
-    return (
-        db.query(ListPlantilla)
-        .order_by(ListPlantilla.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
-
-
-def obtener_plantilla(db: Session, plantilla_id: int) -> ListPlantilla:
-    plantilla = db.query(ListPlantilla).filter(ListPlantilla.id == plantilla_id).first()
-    if not plantilla:
-        raise HTTPException(status_code=404, detail="Plantilla no encontrada.")
-    return plantilla
-
-
-def eliminar_plantilla(db: Session, plantilla_id: int) -> None:
-    plantilla = obtener_plantilla(db, plantilla_id)
-    db.delete(plantilla)
-    db.commit()
 
 
 # ── CRUD de documentos (persistencia + resume) ──────────────────────────────────

@@ -122,14 +122,14 @@ export default function ServiceFormModal({ onConfirm, onCancel }) {
           <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '0.5rem 0' }} />
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Partición (Partida)</label>
-            <input 
-              type="text" 
-              value={particion} 
+            <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Partida</label>
+            <input
+              type="text"
+              value={particion}
               onChange={e => setParticion(e.target.value)}
               list="partitions-list"
               className="input-field"
-              placeholder="Escribe nombre de partición"
+              placeholder="Escribe nombre de partida"
               required
             />
             <datalist id="partitions-list">
@@ -138,14 +138,14 @@ export default function ServiceFormModal({ onConfirm, onCancel }) {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Sub-Partición (Sub-Partida)</label>
-            <input 
-              type="text" 
-              value={subparticion} 
+            <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Sub-Partida</label>
+            <input
+              type="text"
+              value={subparticion}
               onChange={e => setSubparticion(e.target.value)}
               list="subpartitions-list"
               className="input-field"
-              placeholder="Escribe nombre de subpartición"
+              placeholder="Escribe nombre de subpartida"
             />
             <datalist id="subpartitions-list">
               {historySubpartitions.map(sp => <option key={sp} value={sp} />)}

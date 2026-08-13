@@ -20,6 +20,7 @@ export default function ListEditor() {
 
   const [exporting, setExporting] = useState(false);
   const [saveStatus, setSaveStatus] = useState('idle'); // idle | saving | saved | error
+  const [pendingSymbol, setPendingSymbol] = useState('check'); // símbolo a insertar con la herramienta "Símbolo"
   const skipSave = useRef(true); // evita guardar justo después de abrir/crear
 
   // Paneles colapsables (responsive): visibles en escritorio, ocultos en móvil.
@@ -128,32 +129,6 @@ export default function ListEditor() {
     }
   }, [s.doc, s.fields, s.overlays]);
 
-  const handleSaveTemplate = useCallback(async (name) => {
-    if (!s.doc) return;
-    try {
-      const res = await listApi.saveTemplate({
-        nombre: name || `Plantilla ${s.doc.original_name}`,
-        pdf_name: s.doc.pdf_name,
-        fields: s.fields.map(stripId),
-        overlays: s.overlays.map(stripId),
-      });
-      notify(`Plantilla guardada (id ${res.id}).`, 'success');
-    } catch (err) {
-      notify(err.response?.data?.detail || 'Error al guardar la plantilla.', 'error');
-    }
-  }, [s.doc, s.fields, s.overlays]);
-
-  const handleLoadTemplate = useCallback(async (tid) => {
-    if (!tid) return;
-    try {
-      const t = await listApi.getTemplate(tid);
-      s.loadTemplate(t.fields, t.overlays);
-      notify(`Plantilla "${t.nombre}" cargada.`, 'success');
-    } catch (err) {
-      notify(err.response?.data?.detail || 'Error al cargar la plantilla.', 'error');
-    }
-  }, [s]);
-
   // ── Render ───────────────────────────────────────────────────────────────────
   if (needsLoad) {
     return (
@@ -186,13 +161,13 @@ export default function ListEditor() {
         setActiveTool={s.setActiveTool}
         zoom={s.zoom}
         setZoom={s.setZoom}
+        pendingSymbol={pendingSymbol}
+        setPendingSymbol={setPendingSymbol}
         currentPage={s.currentPage}
         numPages={s.numPages}
         setCurrentPage={s.setCurrentPage}
         onExport={handleExport}
         exporting={exporting}
-        onSaveTemplate={handleSaveTemplate}
-        onLoadTemplate={handleLoadTemplate}
         onNew={() => { s.reset(); navigate('/list'); }}
         canUndo={s.historyIndex > 0}
         canRedo={s.historyIndex < s.history.length - 1}
@@ -212,6 +187,7 @@ export default function ListEditor() {
           setSelected={s.setSelected}
           activeTool={s.activeTool}
           zoom={s.zoom}
+          pendingSymbol={pendingSymbol}
           currentPage={s.currentPage}
           setCurrentPage={s.setCurrentPage}
           setNumPages={s.setNumPages}
@@ -219,6 +195,7 @@ export default function ListEditor() {
           setPageScale={s.setPageScale}
           addField={s.addField}
           addOverlay={s.addOverlay}
+          addSymbol={s.addSymbol}
           updateField={s.updateField}
           updateOverlay={s.updateOverlay}
           onDelete={s.deleteSelected}

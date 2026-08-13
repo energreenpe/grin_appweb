@@ -320,6 +320,42 @@ def delete_producto(db: Session, producto_id: int) -> bool:
     return True
 
 
+def _find_producto_duplicado(db: Session, nombre: str, marca: str) -> Optional[Producto]:
+    """Busca un producto existente con el mismo nombre+marca (sin distinguir
+    mayúsculas ni espacios), usado por la importación masiva para no duplicar
+    productos que ya están en el catálogo."""
+    return (
+        db.query(Producto)
+        .filter(func.lower(Producto.nombre) == nombre.strip().lower())
+        .filter(func.lower(func.coalesce(Producto.marca, "")) == (marca or "").strip().lower())
+        .first()
+    )
+
+
+def bulk_import_productos(db: Session, productos: list[ProductoCreate]) -> dict:
+    """Inserta en bloque los productos que no dupliquen uno ya existente (mismo
+    nombre+marca), en una única transacción. También deduplica entre sí las filas
+    del propio archivo (si el Excel trae el mismo producto dos veces)."""
+    creados: list[Producto] = []
+    omitidos: list[dict] = []
+    vistos: set[tuple[str, str]] = set()
+
+    for data in productos:
+        clave = (data.nombre.strip().lower(), (data.marca or "").strip().lower())
+        if clave in vistos or _find_producto_duplicado(db, data.nombre, data.marca):
+            omitidos.append({"nombre": data.nombre, "marca": data.marca})
+            continue
+        vistos.add(clave)
+        prod = Producto(**data.model_dump())
+        db.add(prod)
+        creados.append(prod)
+
+    db.commit()
+    for p in creados:
+        db.refresh(p)
+    return {"creados": creados, "omitidos": omitidos}
+
+
 # ─── COTIZACIONES ────────────────────────────────────────────────────────────
 
 def get_cotizaciones(db: Session, skip: int = 0, limit: int = 50) -> list[Cotizacion]:

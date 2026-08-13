@@ -72,6 +72,20 @@ export const useListStore = create((set, get) => ({
     set({ fields, selected: id, activeTool: 'select' });
     get()._pushHistory(fields, get().overlays);
   },
+  // Símbolo tipo "viñeta" (check ✔ / aspa ✘ / punto •): es un field más (misma
+  // geometría, tamaño y color reutilizados), pero con `symbol` definido y sin
+  // texto libre — pdf_stamp.py lo dibuja como figura vectorial, no como texto.
+  addSymbol: (pageIndex, x, y, symbol = 'check') => {
+    const id = `symbol_${Date.now()}`;
+    const nf = {
+      id, page: pageIndex, x, y, width: 24, height: 24, text: '',
+      font_family: 'Helvetica', font_size: 20, font_color: [0, 0, 0], bg_color: null,
+      symbol,
+    };
+    const fields = [...get().fields, nf];
+    set({ fields, selected: id, activeTool: 'select' });
+    get()._pushHistory(fields, get().overlays);
+  },
   addOverlay: (pageIndex, x, y) => {
     const id = `overlay_${Date.now()}`;
     const no = { id, page: pageIndex, x, y, width: 120, height: 30, color: [1, 1, 1] };
@@ -114,11 +128,4 @@ export const useListStore = create((set, get) => ({
     }
   },
 
-  // ── Plantillas ─────────────────────────────────────────────────────────────-
-  loadTemplate: (fields, overlays) => {
-    const f = (fields || []).map((x, i) => ({ id: `field_load_${i}_${Date.now()}`, ...x }));
-    const o = (overlays || []).map((x, i) => ({ id: `overlay_load_${i}_${Date.now()}`, ...x }));
-    set({ fields: f, overlays: o, selected: null });
-    get()._pushHistory(f, o);
-  },
 }));

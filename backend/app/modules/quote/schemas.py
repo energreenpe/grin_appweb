@@ -79,6 +79,19 @@ class ProductoOut(ProductoBase):
     created_at: datetime
 
 
+# ─── IMPORTACIÓN MASIVA DE PRODUCTOS (EXCEL) ──────────────────────────────────
+
+class ImportRowError(BaseModel):
+    fila:     int
+    errores:  list[str]
+
+
+class ProductImportResult(BaseModel):
+    creados:             int
+    omitidos_duplicados: int
+    productos_omitidos:  list[str] = []
+
+
 # ─── ÍTEM DE COTIZACIÓN ───────────────────────────────────────────────────────
 
 class ItemBase(BaseModel):

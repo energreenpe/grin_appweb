@@ -1,14 +1,20 @@
-import { useState } from 'react';
 import {
-  MousePointer, Type, Square, ChevronLeft, ChevronRight,
-  ZoomIn, ZoomOut, Undo2, Redo2, Save, FolderOpen, Download, Layers, Sliders,
+  MousePointer, Type, Square, CheckSquare, ChevronLeft, ChevronRight,
+  ZoomIn, ZoomOut, Undo2, Redo2, Download, Layers, Sliders,
 } from 'lucide-react';
+
+const SYMBOL_OPTIONS = [
+  { value: 'check', label: '✔', title: 'Check' },
+  { value: 'cross', label: '✘', title: 'Aspa' },
+  { value: 'bullet', label: '•', title: 'Punto' },
+];
 
 export default function Toolbar({
   docName, saveStatus, leftOpen, rightOpen, onToggleLeft, onToggleRight,
   activeTool, setActiveTool, zoom, setZoom,
+  pendingSymbol, setPendingSymbol,
   currentPage, numPages, setCurrentPage, onExport, exporting,
-  onSaveTemplate, onLoadTemplate, onNew,
+  onNew,
   canUndo, canRedo, onUndo, onRedo,
 }) {
   const saveLabel = {
@@ -16,17 +22,6 @@ export default function Toolbar({
     saved: 'Guardado ✓',
     error: 'Error al guardar',
   }[saveStatus];
-  const [showModal, setShowModal] = useState(false);
-  const [action, setAction] = useState('save');
-  const [templateName, setTemplateName] = useState('');
-  const [templateId, setTemplateId] = useState('');
-
-  const openDialog = (a) => { setAction(a); setTemplateName(''); setTemplateId(''); setShowModal(true); };
-  const submit = () => {
-    if (action === 'save') onSaveTemplate(templateName);
-    else onLoadTemplate(templateId);
-    setShowModal(false);
-  };
 
   return (
     <header className="list-toolbar glass">
@@ -47,6 +42,24 @@ export default function Toolbar({
         <button className={`tool-btn ${activeTool === 'overlay' ? 'active' : ''}`} onClick={() => setActiveTool('overlay')} title="Cobertura (O)">
           <Square className="tool-icon" /><span>Cobertura</span>
         </button>
+        <button className={`tool-btn ${activeTool === 'symbol' ? 'active' : ''}`} onClick={() => setActiveTool('symbol')} title="Símbolo (viñeta)">
+          <CheckSquare className="tool-icon" /><span>Símbolo</span>
+        </button>
+        {activeTool === 'symbol' && (
+          <div className="symbol-picker" title="Símbolo a insertar">
+            {SYMBOL_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                className={`symbol-opt ${pendingSymbol === opt.value ? 'active' : ''}`}
+                onClick={() => setPendingSymbol(opt.value)}
+                title={opt.title}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="toolbar-section right">
@@ -87,36 +100,10 @@ export default function Toolbar({
         </div>
         <span className="divider-sm" />
 
-        <div className="btn-group">
-          <button className="action-btn" onClick={() => openDialog('save')} title="Guardar como plantilla"><Save size={16} /><span>Plantilla</span></button>
-          <button className="action-btn" onClick={() => openDialog('load')} title="Cargar plantilla"><FolderOpen size={16} /></button>
-        </div>
-        <span className="divider" />
-
         <button className={`export-btn-primary ${exporting ? 'loading-state' : ''}`} onClick={onExport} disabled={exporting}>
           {exporting ? (<><div className="spinner" /><span>Exportando...</span></>) : (<><Download size={16} /><span>Exportar PDF</span></>)}
         </button>
       </div>
-
-      {showModal && (
-        <div className="template-modal-backdrop" onClick={() => setShowModal(false)}>
-          <div className="template-modal-content glass" onClick={(e) => e.stopPropagation()}>
-            <h2>{action === 'save' ? 'Guardar Plantilla' : 'Cargar Plantilla'}</h2>
-            <p>{action === 'save'
-              ? 'Asigna un nombre para identificar la distribución de campos.'
-              : 'Pega el identificador (id) de la plantilla a importar.'}</p>
-            {action === 'save' ? (
-              <input className="input-field" type="text" placeholder="Ej. Formulario A4" value={templateName} onChange={(e) => setTemplateName(e.target.value)} autoFocus />
-            ) : (
-              <input className="input-field" type="text" placeholder="Ej. 12" value={templateId} onChange={(e) => setTemplateId(e.target.value)} autoFocus />
-            )}
-            <div className="modal-actions">
-              <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
-              <button className="btn btn-primary" onClick={submit} disabled={action === 'save' ? !templateName.trim() : !templateId.trim()}>Confirmar</button>
-            </div>
-          </div>
-        </div>
-      )}
     </header>
   );
 }

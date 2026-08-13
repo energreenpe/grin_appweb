@@ -1,5 +1,7 @@
 import { Layers, FileText, Square } from 'lucide-react';
 
+const SYMBOL_LABELS = { check: '✔ Símbolo (check)', cross: '✘ Símbolo (aspa)', bullet: '• Símbolo (punto)' };
+
 export default function LeftPanel({ open = true, fields, overlays, selected, setSelected, currentPage }) {
   const pageFields = fields.filter((f) => f.page === currentPage - 1);
   const pageOverlays = overlays.filter((o) => o.page === currentPage - 1);
@@ -34,7 +36,11 @@ export default function LeftPanel({ open = true, fields, overlays, selected, set
                   <div className="layer-left">
                     <span className={`layer-badge ${item.kind}`}>{isField ? <FileText size={10} /> : <Square size={10} />}</span>
                     <span className="layer-label">
-                      {isField ? (item.text.trim() || <span className="empty-text">Texto vacío...</span>) : 'Cobertura / Máscara'}
+                      {isField
+                        ? (item.symbol
+                            ? (SYMBOL_LABELS[item.symbol] || 'Símbolo')
+                            : (item.text.trim() || <span className="empty-text">Texto vacío...</span>))
+                        : 'Cobertura / Máscara'}
                     </span>
                   </div>
                   <span className="layer-coords">{Math.round(item.x)},{Math.round(item.y)}</span>

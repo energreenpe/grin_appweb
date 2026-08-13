@@ -36,14 +36,14 @@ export default function ProductPartitionModal({ product, onConfirm, onCancel }) 
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Partición (Partida)</label>
+            <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Partida</label>
             <input 
               type="text" 
               value={particion} 
               onChange={e => setParticion(e.target.value)}
               list="partitions-list"
               className="input-field"
-              placeholder="Escribe nombre de partición"
+              placeholder="Escribe nombre de partida"
               required
               autoFocus
             />
@@ -53,14 +53,14 @@ export default function ProductPartitionModal({ product, onConfirm, onCancel }) 
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Sub-Partición (Sub-Partida)</label>
+            <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Sub-Partida</label>
             <input 
               type="text" 
               value={subparticion} 
               onChange={e => setSubparticion(e.target.value)}
               list="subpartitions-list"
               className="input-field"
-              placeholder="Escribe nombre de subpartición"
+              placeholder="Escribe nombre de subpartida"
             />
             <datalist id="subpartitions-list">
               {historySubpartitions.map(sp => <option key={sp} value={sp} />)}

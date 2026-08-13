@@ -9,6 +9,7 @@ export default function Dashboard() {
     { id: 'quote', name: 'QUOTE', icon: '💰', active: true, path: '/quote' },
     { id: 'list', name: 'LIST', icon: '📝', active: true, path: '/list' },
     { id: 'planner', name: 'PLANNER', icon: '☀️', active: true, path: '/planner' },
+    { id: 'monitor', name: 'MONITOR', icon: '🖥️', active: false, path: '/monitor' },
   ];
 
   return (
@@ -84,7 +85,7 @@ export default function Dashboard() {
               <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{mod.name}</span>
               {!mod.active && (
                 <span style={{ fontSize: '0.75rem', padding: '2px 8px', background: 'rgba(0,0,0,0.5)', borderRadius: '10px' }}>
-                  Próximamente
+                  En desarrollo
                 </span>
               )}
             </button>

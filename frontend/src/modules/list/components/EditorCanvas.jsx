@@ -12,17 +12,18 @@ import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 
 export default function EditorCanvas({
-  pdfUrl, fields, overlays, selected, setSelected, activeTool, zoom,
+  pdfUrl, fields, overlays, selected, setSelected, activeTool, zoom, pendingSymbol,
   currentPage, setCurrentPage, setNumPages, pageScale, setPageScale,
-  addField, addOverlay, updateField, updateOverlay, onDelete,
+  addField, addOverlay, addSymbol, updateField, updateOverlay, onDelete,
 }) {
   const [cursorStyle, setCursorStyle] = useState('default');
   const [pdfError, setPdfError] = useState(null);
   const [numPages, setNumPagesLocal] = useState(0);
   const originalSizeRef = useRef({ width: 595.27, height: 841.89 });
+  const pageRefs = useRef({});
 
   useEffect(() => {
-    const map = { select: 'default', text: 'crosshair', overlay: 'crosshair' };
+    const map = { select: 'default', text: 'crosshair', overlay: 'crosshair', symbol: 'crosshair' };
     setCursorStyle(map[activeTool] || 'default');
   }, [activeTool]);
 
@@ -40,8 +41,10 @@ export default function EditorCanvas({
       addField(targetPage - 1, Math.max(0, pdfCoords.x - 75), Math.max(0, pdfCoords.y - 12));
     } else if (activeTool === 'overlay') {
       addOverlay(targetPage - 1, Math.max(0, pdfCoords.x - 60), Math.max(0, pdfCoords.y - 15));
+    } else if (activeTool === 'symbol') {
+      addSymbol(targetPage - 1, Math.max(0, pdfCoords.x - 12), Math.max(0, pdfCoords.y - 12), pendingSymbol);
     }
-  }, [activeTool, zoom, currentPage, pageScale, addField, addOverlay, setSelected, setCurrentPage]);
+  }, [activeTool, zoom, currentPage, pageScale, addField, addOverlay, addSymbol, pendingSymbol, setSelected, setCurrentPage]);
 
   // Deselecciona al hacer clic en cualquier parte del lienzo que NO sea un elemento
   // (PDF, márgenes, fondo). Los elementos detienen el clic, así que si llega aquí y
@@ -57,16 +60,47 @@ export default function EditorCanvas({
     setNumPages(np);
   }, [setNumPages]);
 
-  const onPageLoadSuccess = useCallback((page) => {
-    const { originalWidth, originalHeight } = page;
-    originalSizeRef.current = { width: originalWidth, height: originalHeight };
-    setTimeout(() => {
-      const pageEl = document.querySelector('.react-pdf__Page');
-      const renderWidth = pageEl ? pageEl.getBoundingClientRect().width / zoom : page.width;
-      const renderHeight = pageEl ? pageEl.getBoundingClientRect().height / zoom : page.height;
-      setPageScale(getScaleFactors(originalWidth, originalHeight, renderWidth, renderHeight));
-    }, 150);
+  // Recalcula pageScale (points ↔ px) a partir del tamaño REAL en pantalla de la
+  // página (nunca de un valor supuesto). Se llama tanto al conocerse las
+  // dimensiones originales del PDF como desde el ResizeObserver de más abajo,
+  // así no importa cuál de los dos datos llegue primero.
+  const recomputeScale = useCallback(() => {
+    const pageEl = document.querySelector('.react-pdf__Page');
+    if (!pageEl) return;
+    const { width, height } = pageEl.getBoundingClientRect();
+    if (!width || !height) return;
+    const { width: originalWidth, height: originalHeight } = originalSizeRef.current;
+    setPageScale(getScaleFactors(originalWidth, originalHeight, width / zoom, height / zoom));
   }, [zoom, setPageScale]);
+
+  const onPageLoadSuccess = useCallback((page) => {
+    originalSizeRef.current = { width: page.originalWidth, height: page.originalHeight };
+    recomputeScale();
+  }, [recomputeScale]);
+
+  // Mantiene pageScale sincronizado con el tamaño REAL renderizado en pantalla
+  // vía ResizeObserver, en vez de una medición única con setTimeout: así los
+  // campos quedan en la posición correcta sin importar el zoom, si se
+  // redimensiona/minimiza la ventana, o cuánto tarde el PDF en pintarse.
+  useEffect(() => {
+    if (numPages === 0) return;
+    const pageEl = document.querySelector('.react-pdf__Page');
+    if (!pageEl) return;
+    recomputeScale();
+    const ro = new ResizeObserver(recomputeScale);
+    ro.observe(pageEl);
+    return () => ro.disconnect();
+  }, [numPages, recomputeScale]);
+
+  // Al cambiar de página (flechas del navegador de páginas, o al seleccionar
+  // un elemento de otra página) desplaza el lienzo hasta el INICIO de esa
+  // página. `block: 'start'` (en vez de 'nearest') asegura que siempre quede
+  // alineada arriba, sin importar si se navega hacia adelante o hacia atrás
+  // — con 'nearest' a veces solo se ve el final de la página anterior.
+  useEffect(() => {
+    const el = pageRefs.current[currentPage];
+    if (el) el.scrollIntoView({ behavior: 'instant', block: 'start' });
+  }, [currentPage]);
 
   return (
     <main className="editor-canvas" style={{ cursor: cursorStyle }} onClick={handleCanvasClick}>
@@ -82,7 +116,12 @@ export default function EditorCanvas({
             {numPages > 0 && Array.from(new Array(numPages), (el, index) => {
               const pageNum = index + 1;
               return (
-                <div key={pageNum} className="pdf-page-wrapper" onClick={(e) => handlePageClick(e, pageNum)}>
+                <div
+                  key={pageNum}
+                  className="pdf-page-wrapper"
+                  onClick={(e) => handlePageClick(e, pageNum)}
+                  ref={(el) => { pageRefs.current[pageNum] = el; }}
+                >
                   <Page
                     pageNumber={pageNum}
                     scale={zoom}
@@ -126,6 +165,7 @@ export default function EditorCanvas({
       <div className="canvas-footer-hint">
         {activeTool === 'text' && <span>Haz clic en la página para colocar un campo de texto</span>}
         {activeTool === 'overlay' && <span>Haz clic para añadir una cobertura</span>}
+        {activeTool === 'symbol' && <span>Haz clic para añadir el símbolo — puedes cambiarlo y ajustar su tamaño en Propiedades</span>}
         {activeTool === 'select' && selected && <span>Arrastra para mover • Tirador para redimensionar • <kbd>Supr</kbd> para borrar</span>}
         {activeTool === 'select' && !selected && <span>Selección: haz clic en un elemento para editarlo</span>}
       </div>

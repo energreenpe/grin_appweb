@@ -5,7 +5,7 @@ from typing import Optional
 import uuid
 
 from app.db import get_db
-from app.modules.quote import schemas, service
+from app.modules.quote import schemas, service, products_import
 from app.modules.quote.pdf import generar_pdf_cotizacion
 from app import storage
 from app.images import to_webp, ImageError, MAX_BYTES
@@ -16,6 +16,10 @@ router = APIRouter()
 # Límites anti-abuso (por IP). Compartido entre las dos rutas de logo = 10 subidas/min.
 upload_limiter = RateLimiter(max_requests=10, window_seconds=60)
 pdf_limiter = RateLimiter(max_requests=10, window_seconds=60)
+import_limiter = RateLimiter(max_requests=5, window_seconds=60)
+
+# Tamaño máximo del Excel de importación de productos (5 MB).
+MAX_IMPORT_BYTES = 5 * 1024 * 1024
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -62,6 +66,51 @@ def delete_product(producto_id: int, db: Session = Depends(get_db)):
     ok = service.delete_producto(db, producto_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+
+@router.get("/products/import/template")
+def download_products_template():
+    """Descarga la plantilla .xlsx en blanco (encabezados + fila de ejemplo) para
+    la importación masiva de productos."""
+    xlsx_bytes = products_import.generate_template_xlsx()
+    return Response(
+        content=xlsx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="plantilla_productos.xlsx"'},
+    )
+
+
+@router.post(
+    "/products/import",
+    response_model=schemas.ProductImportResult,
+    dependencies=[Depends(import_limiter)],
+)
+def import_products(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """Importa productos en bloque desde un Excel (.xlsx). Todo o nada: si el
+    archivo tiene alguna fila inválida, no se importa nada y se devuelve el
+    detalle de las filas con error para corregirlas. Los productos que ya existen
+    (mismo nombre+marca) se omiten en vez de duplicarse."""
+    if not (file.filename or "").lower().endswith(".xlsx"):
+        raise HTTPException(status_code=400, detail="El archivo debe tener formato .xlsx")
+
+    raw = file.file.read(MAX_IMPORT_BYTES + 1)
+    if len(raw) > MAX_IMPORT_BYTES:
+        raise HTTPException(status_code=400, detail="El archivo supera el tamaño máximo permitido (5 MB).")
+
+    try:
+        productos, errores = products_import.parse_products_xlsx(raw)
+    except products_import.ImportStructureError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if errores:
+        raise HTTPException(status_code=422, detail={"errores": errores})
+
+    resultado = service.bulk_import_productos(db, productos)
+    return schemas.ProductImportResult(
+        creados=len(resultado["creados"]),
+        omitidos_duplicados=len(resultado["omitidos"]),
+        productos_omitidos=[f"{o['nombre']} ({o['marca']})" for o in resultado["omitidos"]],
+    )
 
 
 

@@ -2,7 +2,8 @@
 export.py — Tarea de estampado de campos/overlays sobre un PDF (worker).
 
 Envoltorio delgado: lee el PDF base vía `storage`, delega el estampado a
-`app.modules.list.pdf_stamp` (reportlab+pypdf) y guarda el resultado vía `storage`.
+`app.modules.list.pdf_stamp` (reportlab+pypdf) y guarda el resultado vía
+`app.modules.list.output_store` (Redis, NO disco: ver ese módulo para el porqué).
 
 Se encola por RUTA de string ("workers.tasks.export.stamp_document") desde el
 service, de modo que `app/` no importa `workers/`.
@@ -15,11 +16,11 @@ from typing import List
 
 from app import storage
 from app.modules.list.pdf_stamp import stamp_pdf
+from app.modules.list.output_store import save_output
 
 logger = logging.getLogger("list.tasks.export")
 
 PDF_SUBDIR = "list/pdf"
-OUTPUT_SUBDIR = "list/output"
 
 
 def stamp_document(pdf_name: str, fields: List[dict], overlays: List[dict]) -> dict:
@@ -37,7 +38,7 @@ def stamp_document(pdf_name: str, fields: List[dict], overlays: List[dict]) -> d
     out_bytes = stamp_pdf(source_bytes, fields, overlays)
 
     output_name = f"{uuid.uuid4().hex}.pdf"
-    storage.save_bytes(out_bytes, OUTPUT_SUBDIR, output_name)
+    save_output(output_name, out_bytes)
 
     logger.info("stamp_document OK: %s → %s", pdf_name, output_name)
     return {"output_name": output_name, "output_url": f"/api/list/output/{output_name}"}

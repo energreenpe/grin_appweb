@@ -54,8 +54,8 @@ export default function QuoteTable({ cotizacionId, readOnly = false }) {
             <th>Descripción</th>
             <th style={{ width: '130px' }}>Precio Unit.</th>
             <th style={{ width: '120px' }}>Subtotal</th>
-            <th style={{ width: '150px' }}>Partición</th>
-            <th style={{ width: '150px' }}>Sub-Partición</th>
+            <th style={{ width: '150px' }}>Partida</th>
+            <th style={{ width: '150px' }}>Sub-Partida</th>
             <th style={{ width: '60px' }}></th>
           </tr>
         </thead>

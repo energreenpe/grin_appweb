@@ -1,16 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { quoteApi } from '../api/quoteApi';
 import ProductFormModal from '../components/ProductFormModal';
+import ProductImportModal from '../components/ProductImportModal';
 import { notify } from '../../../lib/notify';
 
 export default function ProductsManager() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  
+
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const loadProducts = useCallback(async (query = '') => {
     setLoading(true);
@@ -71,21 +73,26 @@ export default function ProductsManager() {
   };
 
   return (
-    <div className="animate-fade-in" style={{ padding: '1rem 0' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+    <div className="animate-fade-in" style={{ padding: '1rem 0', height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexShrink: 0 }}>
         <div>
           <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Catálogo de Productos</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Administra los productos disponibles para cotizar.</p>
         </div>
-        <button onClick={handleCreate} className="btn btn-primary" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <span>+</span> Nuevo Producto
-        </button>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button onClick={() => setIsImportModalOpen(true)} className="btn btn-secondary" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <span>⬆</span> Importar desde Excel
+          </button>
+          <button onClick={handleCreate} className="btn btn-primary" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <span>+</span> Nuevo Producto
+          </button>
+        </div>
       </div>
 
-      <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
+      <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2rem', flexShrink: 0 }}>
         <form onSubmit={handleSearch} style={{ display: 'flex', gap: '1rem' }}>
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por nombre, marca o categoría..."
@@ -101,7 +108,7 @@ export default function ProductsManager() {
         </form>
       </div>
 
-      <div className="glass-panel" style={{ overflow: 'hidden' }}>
+      <div className="glass-panel" style={{ overflow: 'hidden', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         {loading ? (
           <div style={{ padding: '2rem', textAlign: 'center' }}>Cargando productos...</div>
         ) : products.length === 0 ? (
@@ -109,15 +116,15 @@ export default function ProductsManager() {
             No se encontraron productos.
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
+          <div style={{ overflow: 'auto', flex: 1, minHeight: 0 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                  <th style={{ padding: '1rem' }}>Nombre</th>
-                  <th style={{ padding: '1rem' }}>Categoría</th>
-                  <th style={{ padding: '1rem' }}>Marca</th>
-                  <th style={{ padding: '1rem' }}>Precio</th>
-                  <th style={{ padding: '1rem', textAlign: 'right' }}>Acciones</th>
+                <tr style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--surface-color)' }}>
+                  <th style={{ padding: '1rem', position: 'sticky', top: 0, backgroundColor: 'var(--surface-color)', zIndex: 1 }}>Nombre</th>
+                  <th style={{ padding: '1rem', position: 'sticky', top: 0, backgroundColor: 'var(--surface-color)', zIndex: 1 }}>Categoría</th>
+                  <th style={{ padding: '1rem', position: 'sticky', top: 0, backgroundColor: 'var(--surface-color)', zIndex: 1 }}>Marca</th>
+                  <th style={{ padding: '1rem', position: 'sticky', top: 0, backgroundColor: 'var(--surface-color)', zIndex: 1 }}>Precio</th>
+                  <th style={{ padding: '1rem', textAlign: 'right', position: 'sticky', top: 0, backgroundColor: 'var(--surface-color)', zIndex: 1 }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -152,10 +159,20 @@ export default function ProductsManager() {
       </div>
 
       {isModalOpen && (
-        <ProductFormModal 
+        <ProductFormModal
           product={editingProduct}
           onSave={handleSaveModal}
           onCancel={() => setIsModalOpen(false)}
+        />
+      )}
+
+      {isImportModalOpen && (
+        <ProductImportModal
+          onImported={() => {
+            setIsImportModalOpen(false);
+            loadProducts(search);
+          }}
+          onCancel={() => setIsImportModalOpen(false)}
         />
       )}
     </div>

@@ -13,16 +13,15 @@ La conversión pesada la ejecuta el worker; aquí solo se encola.
 from typing import List
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
 
 from app import storage
 from app.db import get_db
 from app.ratelimit import RateLimiter
-from app.modules.list import service
+from app.modules.list import service, output_store
 from app.modules.list.schemas import (
     ExportPayload, ExportResponse, JobStatusOut, UploadResponse,
-    ListPlantillaCreate, ListPlantillaListItem, ListPlantillaOut,
     ListDocumentoCreate, ListDocumentoUpdate, ListDocumentoListItem, ListDocumentoOut,
 )
 
@@ -33,7 +32,6 @@ upload_limiter = RateLimiter(max_requests=20, window_seconds=60)
 export_limiter = RateLimiter(max_requests=30, window_seconds=60)
 
 PDF_SUBDIR = "list/pdf"
-OUTPUT_SUBDIR = "list/output"
 
 
 def _serve_pdf_seguro(subdir: str, filename: str):
@@ -80,34 +78,20 @@ def serve_pdf(filename: str):
 
 @router.get("/output/{filename}")
 def serve_output(filename: str):
-    """Sirve un PDF estampado (resultado de exportar)."""
-    return _serve_pdf_seguro(OUTPUT_SUBDIR, filename)
-
-
-# ── Plantillas (PostgreSQL) ─────────────────────────────────────────────────────
-@router.post("/templates", response_model=ListPlantillaOut)
-def crear_plantilla(data: ListPlantillaCreate, db: Session = Depends(get_db)):
-    """Guarda una configuración reutilizable de campos/overlays."""
-    return service.crear_plantilla(db, data)
-
-
-@router.get("/templates", response_model=List[ListPlantillaListItem])
-def listar_plantillas(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """Lista las plantillas (sin el detalle de fields/overlays)."""
-    return service.listar_plantillas(db, skip=skip, limit=limit)
-
-
-@router.get("/templates/{plantilla_id}", response_model=ListPlantillaOut)
-def obtener_plantilla(plantilla_id: int, db: Session = Depends(get_db)):
-    """Devuelve una plantilla completa por id."""
-    return service.obtener_plantilla(db, plantilla_id)
-
-
-@router.delete("/templates/{plantilla_id}")
-def eliminar_plantilla(plantilla_id: int, db: Session = Depends(get_db)):
-    """Elimina una plantilla."""
-    service.eliminar_plantilla(db, plantilla_id)
-    return {"status": "deleted", "id": plantilla_id}
+    """Sirve un PDF estampado (resultado de exportar) y lo borra de inmediato:
+    es una descarga de UN SOLO USO desde Redis, nunca se guarda en uploads/
+    (ver app.modules.list.output_store). Si ya se descargó o expiró (10 min),
+    404 — hay que volver a exportar."""
+    if ("/" in filename) or ("\\" in filename) or (".." in filename) or not filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Nombre de archivo inválido.")
+    data = output_store.pop_output(filename)
+    if data is None:
+        raise HTTPException(status_code=404, detail="El documento ya no está disponible. Vuelve a exportarlo.")
+    return Response(
+        content=data,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 # ── Documentos (persistencia + resume) ──────────────────────────────────────────

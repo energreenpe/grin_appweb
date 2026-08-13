@@ -13,10 +13,10 @@ export default function QuoteSummary() {
         Resumen
       </h3>
 
-      {/* Subtotales por Partición */}
+      {/* Subtotales por Partida */}
       {Object.keys(totales.por_particion || {}).length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
-          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Por Partición</div>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Por Partida</div>
           {Object.entries(totales.por_particion).map(([particion, valor]) => (
             <div key={particion} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
               <span style={{ color: 'var(--text-secondary)' }}>{particion}</span>

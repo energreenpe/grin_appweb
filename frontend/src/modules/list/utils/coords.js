@@ -30,12 +30,51 @@ export function pdfToHtml(pdfX, pdfY, pdfWidth, pdfHeight, scaleX, scaleY, zoom)
   const z = zoom || 1.0;
   const sX = scaleX || 1.0;
   const sY = scaleY || 1.0;
+  // Redondeado a px entero: el <canvas> del PDF ya cae en una grilla de píxeles
+  // físicos (pdf.js la redondea internamente al pintar). Si nuestra capa de
+  // texto queda en una posición fraccionaria (ej. 676.23px), el navegador la
+  // redondea por su cuenta al pintar — y con devicePixelRatio fraccionario
+  // (1.5, 2.625, típico de Windows a 150%/250%+ de escala) ese redondeo puede
+  // no coincidir con el del canvas, produciendo un desfase visible sobre todo
+  // a zooms bajos (filas muy chicas en píxeles). Redondear acá evita esa
+  // segunda ronda de redondeo impredecible del navegador.
   return {
-    left: (pdfX / sX) * z,
-    top: (pdfY / sY) * z,
-    width: (pdfWidth / sX) * z,
-    height: (pdfHeight / sY) * z,
+    left: Math.round((pdfX / sX) * z),
+    top: Math.round((pdfY / sY) * z),
+    width: Math.round((pdfWidth / sX) * z),
+    height: Math.round((pdfHeight / sY) * z),
   };
+}
+
+let _measureCtx = null;
+function _getMeasureCtx() {
+  if (!_measureCtx) _measureCtx = document.createElement('canvas').getContext('2d');
+  return _measureCtx;
+}
+
+/** Ancho aproximado (points PDF, 1px≈1pt) de una sola línea de texto con la
+ * fuente/tamaño dados. Usa la fuente web más parecida — el PDF final se
+ * genera con fuentes estándar (Helvetica/Times/Courier) que no miden
+ * exactamente igual, por eso getMinFieldSize aplica un margen de seguridad
+ * sobre este valor en vez de usarlo tal cual. */
+function measureLineWidth(line, fontFamily, fontSize) {
+  const ctx = _getMeasureCtx();
+  const family = fontFamily === 'Courier' ? 'monospace' : 'sans-serif';
+  ctx.font = `${fontSize}px ${family}`;
+  return ctx.measureText(line).width;
+}
+
+/** Tamaño mínimo (points PDF) para que el texto de un campo entre completo y
+ * no desaparezca al exportar (pdf_stamp.py recorta silenciosamente lo que no
+ * entra en el cuadro). Alto = una línea por cada salto de línea explícito
+ * (leading = font_size*1.2, igual fórmula que usa el backend); ancho = lo que
+ * mide la línea más larga, con margen de seguridad. */
+export function getMinFieldSize(text, fontFamily, fontSize) {
+  const lines = (text || '').split('\n');
+  const minHeight = Math.max(16, Math.ceil(fontSize * 1.2 * lines.length));
+  const widest = Math.max(0, ...lines.map((l) => measureLineWidth(l, fontFamily, fontSize)));
+  const minWidth = Math.max(30, Math.ceil(widest * 1.15) + 8);
+  return { minWidth, minHeight };
 }
 
 /** RGB float [r,g,b] (0..1) → "#rrggbb". */

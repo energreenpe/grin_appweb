@@ -1,6 +1,10 @@
-import { NavLink } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 
 export default function Sidebar({ onNavigate, showClose = false, onClose }) {
+  const location = useLocation();
+  const [quoteOpen, setQuoteOpen] = useState(location.pathname.startsWith('/products'));
+
   const navStyle = ({ isActive }) => ({
     display: 'flex',
     alignItems: 'center',
@@ -10,6 +14,20 @@ export default function Sidebar({ onNavigate, showClose = false, onClose }) {
     borderRadius: 'var(--radius)',
     textDecoration: 'none',
     fontWeight: '500',
+    marginBottom: '0.5rem',
+    transition: 'all 0.2s',
+  });
+
+  const subNavStyle = ({ isActive }) => ({
+    display: 'flex',
+    alignItems: 'center',
+    padding: '0.6rem 1rem 0.6rem 2.25rem',
+    color: isActive ? 'var(--primary-color)' : 'var(--text-secondary)',
+    backgroundColor: isActive ? 'rgba(98, 185, 137, 0.1)' : 'transparent',
+    borderRadius: 'var(--radius)',
+    textDecoration: 'none',
+    fontWeight: '500',
+    fontSize: '0.9rem',
     marginBottom: '0.5rem',
     transition: 'all 0.2s',
   });
@@ -57,12 +75,34 @@ export default function Sidebar({ onNavigate, showClose = false, onClose }) {
         <div style={{ margin: '1.5rem 0 0.5rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
           Módulos
         </div>
-        <NavLink to="/quote" style={navStyle} onClick={onNavigate}>
-          💰 Cotizaciones (QUOTE)
-        </NavLink>
-        <NavLink to="/products" style={navStyle} onClick={onNavigate}>
-          📦 Productos
-        </NavLink>
+        <div style={{ display: 'flex', alignItems: 'stretch', marginBottom: '0.5rem' }}>
+          <NavLink to="/quote" style={{ ...navStyle({ isActive: location.pathname === '/quote' }), flex: 1, marginBottom: 0 }} onClick={onNavigate}>
+            💰 Cotizaciones (QUOTE)
+          </NavLink>
+          <button
+            type="button"
+            onClick={() => setQuoteOpen((v) => !v)}
+            aria-label={quoteOpen ? 'Ocultar submódulos de Cotizaciones' : 'Mostrar submódulos de Cotizaciones'}
+            aria-expanded={quoteOpen}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              padding: '0 0.5rem',
+              fontSize: '0.75rem',
+              transition: 'transform 0.2s',
+              transform: quoteOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+            }}
+          >
+            ▶
+          </button>
+        </div>
+        {quoteOpen && (
+          <NavLink to="/products" style={subNavStyle} onClick={onNavigate}>
+            📦 Productos
+          </NavLink>
+        )}
         <NavLink to="/math" style={navStyle} onClick={onNavigate}>
           📐 Calculos Solares (MATH)
         </NavLink>
@@ -75,6 +115,34 @@ export default function Sidebar({ onNavigate, showClose = false, onClose }) {
         <NavLink to="/planner" style={navStyle} onClick={onNavigate}>
           ☀️ Proyectos (PLANNER)
         </NavLink>
+        <div
+          aria-disabled="true"
+          title="Módulo en desarrollo"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0.75rem 1rem',
+            color: 'var(--text-secondary)',
+            borderRadius: 'var(--radius)',
+            fontWeight: '500',
+            marginBottom: '0.5rem',
+            opacity: 0.5,
+            cursor: 'not-allowed',
+          }}
+        >
+          <span>🖥️ Monitoreo (MONITOR)</span>
+          <span style={{
+            fontSize: '0.65rem',
+            padding: '2px 6px',
+            background: 'rgba(0,0,0,0.3)',
+            borderRadius: '8px',
+            whiteSpace: 'nowrap',
+            marginLeft: '0.5rem',
+          }}>
+            En desarrollo
+          </span>
+        </div>
       </nav>
     </aside>
   );

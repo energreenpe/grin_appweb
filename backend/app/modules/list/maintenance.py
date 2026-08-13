@@ -7,10 +7,13 @@ ejecutado por un job periódico del worker (ver workers/tasks/cleanup.py).
 
 TTL (segundos) por subcarpeta de uploads/:
 - list/incoming : 1 h  — el archivo crudo subido; se borra tras convertir (esto cubre fallos).
-- list/output   : 1 h  — el resultado estampado se descarga y deja de necesitarse pronto.
 
 NOTA: list/pdf (PDF base de los documentos) NO se limpia por TTL: es permanente
 mientras exista el ListDocumento que lo referencia (se borra al eliminar el documento).
+
+NOTA: el resultado estampado (export) YA NO se guarda en disco — vive un rato
+corto en Redis y se borra al descargarse (ver app.modules.list.output_store),
+así que no hay nada que limpiar aquí para esa carpeta.
 """
 from __future__ import annotations
 
@@ -24,7 +27,6 @@ logger = logging.getLogger("list.maintenance")
 
 TTL_POR_SUBDIR = {
     "list/incoming": 1 * 3600,
-    "list/output": 1 * 3600,
 }
 
 

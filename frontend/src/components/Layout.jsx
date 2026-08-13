@@ -30,7 +30,7 @@ export default function Layout() {
   const handleNavigate = () => { if (isMobile) setOpen(false); };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-color)' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', backgroundColor: 'var(--bg-color)' }}>
       <Toaster />
 
       {open && (

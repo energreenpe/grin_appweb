@@ -19,6 +19,27 @@ export const quoteApi = {
     return res.data;
   },
 
+  // Importación masiva de productos desde Excel
+  downloadProductsTemplate: async () => {
+    const res = await api.get('/quote/products/import/template', { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'plantilla_productos.xlsx');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  },
+
+  importProducts: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await api.post('/quote/products/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return res.data;
+  },
+
   // Cotizaciones
   getCotizaciones: async () => {
     const res = await api.get('/quote/cotizaciones', { params: { limit: 1000 } });

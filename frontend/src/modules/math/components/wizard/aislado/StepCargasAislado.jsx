@@ -73,6 +73,7 @@ export default function StepCargasAislado({ onNext }) {
   };
 
   const totalEnergia = data.cargas.reduce((acc, c) => acc + c.cantidad * c.potencia_w * c.horas, 0);
+  const totalPotencia = data.cargas.reduce((acc, c) => acc + c.cantidad * c.potencia_w, 0);
   const scrollable = data.cargas.length > 4;
   const stickyTh = { position: 'sticky', top: 0, zIndex: 1 };
   // minWidth:0 permite que los hijos de grid/flex se encojan (responsivo móvil).
@@ -165,6 +166,7 @@ export default function StepCargasAislado({ onNext }) {
                       <th style={stickyTh}>Equipo</th>
                       <th style={stickyTh}>Cant.</th>
                       <th style={stickyTh}>W c/u</th>
+                      <th style={stickyTh}>Potencia (W)</th>
                       <th style={stickyTh}>Hrs/día</th>
                       <th style={stickyTh}>Wh/día</th>
                       <th style={stickyTh}></th>
@@ -176,6 +178,7 @@ export default function StepCargasAislado({ onNext }) {
                         <td>{item.nombre}</td>
                         <td>{item.cantidad}</td>
                         <td>{item.potencia_w} W</td>
+                        <td>{Math.round(item.cantidad * item.potencia_w)} W</td>
                         <td>{item.horas} h</td>
                         <td><strong>{Math.round(item.cantidad * item.potencia_w * item.horas)}</strong></td>
                         <td style={{ textAlign: 'right' }}>
@@ -187,6 +190,9 @@ export default function StepCargasAislado({ onNext }) {
                 </table>
               </div>
               <div style={{ textAlign: 'right', marginTop: '1rem', color: 'var(--text-secondary)' }}>
+                Potencia requerida total: <strong style={{ color: 'var(--primary-color)' }}>{Math.round(totalPotencia)} W</strong>
+              </div>
+              <div style={{ textAlign: 'right', marginTop: '0.5rem', color: 'var(--text-secondary)' }}>
                 Energía diaria total: <strong style={{ color: 'var(--primary-color)' }}>{Math.round(totalEnergia)} Wh/día</strong>
               </div>
             </>

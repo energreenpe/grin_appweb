@@ -46,12 +46,6 @@ export const listApi = {
     window.URL.revokeObjectURL(url);
   },
 
-  // ── Plantillas (PostgreSQL) ────────────────────────────────────────────────
-  saveTemplate: async (payload) => (await api.post('/list/templates', payload)).data,
-  listTemplates: async () => (await api.get('/list/templates')).data,
-  getTemplate: async (id) => (await api.get(`/list/templates/${id}`)).data,
-  deleteTemplate: async (id) => (await api.delete(`/list/templates/${id}`)).data,
-
   // ── Documentos (persistencia + resume) ─────────────────────────────────────
   createDocumento: async (payload) => (await api.post('/list/documentos', payload)).data,
   listDocumentos: async () => (await api.get('/list/documentos')).data,

@@ -20,6 +20,12 @@ from typing_extensions import Literal
 # Fuentes PDF estándar soportadas por el estampador (mapean a helv/times/cour).
 FontFamily = Literal["Helvetica", "Times-Roman", "Courier"]
 
+# Símbolos tipo "viñeta" (check/aspa/punto). Se dibujan como figuras vectoriales
+# en pdf_stamp.py, NO como glifos de fuente: Helvetica/Times/Courier (fuentes
+# estándar PDF) no incluyen los caracteres Unicode ✔/✘, así que dibujarlos a
+# mano es lo único que garantiza que se vean igual en cualquier lector de PDF.
+SymbolType = Literal["check", "cross", "bullet"]
+
 
 def _validate_rgb(v: Optional[List[float]]) -> Optional[List[float]]:
     if v is None:
@@ -32,7 +38,9 @@ def _validate_rgb(v: Optional[List[float]]) -> Optional[List[float]]:
 
 
 class ListFieldSchema(BaseModel):
-    """Campo de texto estampable sobre el PDF (en points)."""
+    """Campo estampable sobre el PDF (en points): texto libre, o un símbolo
+    (check/aspa/punto) cuando `symbol` está definido — en ese caso `text` se
+    ignora al estampar."""
     page: int = Field(..., ge=0, description="Índice de página (0-indexed)")
     x: float = Field(..., description="Coordenada X en PDF points")
     y: float = Field(..., description="Coordenada Y en PDF points")
@@ -43,6 +51,7 @@ class ListFieldSchema(BaseModel):
     font_size: int = Field(12, ge=1, le=400)
     font_color: List[float] = Field(default_factory=lambda: [0.0, 0.0, 0.0])
     bg_color: Optional[List[float]] = Field(default=None)
+    symbol: Optional[SymbolType] = Field(default=None)
 
     @field_validator("font_color")
     @classmethod
@@ -68,33 +77,6 @@ class ListOverlaySchema(BaseModel):
     @classmethod
     def _check_color(cls, v):
         return _validate_rgb(v)
-
-
-# ── Plantillas (persistencia en PostgreSQL; CRUD en el entregable #5) ───────────
-class ListPlantillaCreate(BaseModel):
-    nombre: str = Field(..., min_length=1, max_length=255)
-    pdf_name: str = Field(..., min_length=1, max_length=255)
-    fields: List[ListFieldSchema] = Field(default_factory=list)
-    overlays: List[ListOverlaySchema] = Field(default_factory=list)
-
-
-class ListPlantillaListItem(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    id: int
-    nombre: str
-    pdf_name: str
-    created_at: Optional[datetime] = None
-
-
-class ListPlantillaOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    id: int
-    nombre: str
-    pdf_name: str
-    fields: List[ListFieldSchema] = Field(default_factory=list)
-    overlays: List[ListOverlaySchema] = Field(default_factory=list)
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
 
 
 # ── Subida / estado de jobs de conversión ──────────────────────────────────────
